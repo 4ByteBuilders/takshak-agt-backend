@@ -12,3 +12,48 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Event {
+  eventId              String   @id @default(uuid())
+  eventName            String
+  ticketIds            String[]
+  venue                String
+  dateTime             DateTime
+  totalNumberOfTickets Int
+  description          String
+  photoUrls            String[]
+  priceOfferings       PriceOffering[]
+}
+
+model PriceOffering {
+  offeringId String @default(uuid())
+  eventId    String
+  name       String
+  price      Float
+  event      Event   @relation(fields: [eventId], references: [eventId])
+
+  @@id([offeringId, eventId])
+}
+
+model Ticket {
+  ticketId String @id @default(uuid())
+  status   Status
+}
+
+model Booking {
+  bookingId  String   @id @default(uuid())
+  userId     String
+  ticketIds  String[]
+  amountPaid Float
+}
+
+model User {
+  userId      String @id @default(uuid())
+  name        String
+  phoneNumber String
+}
+
+enum Status {
+  AVAILABLE
+  BOOKED
+}
