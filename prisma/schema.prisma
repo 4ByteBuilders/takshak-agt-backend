@@ -10,7 +10,7 @@ datasource db {
 model Event {
   id                   String          @id @default(uuid())
   title                String
-  ticketIds            String[]
+  tickets              Ticket[]
   venue                String
   dateTime             DateTime
   totalNumberOfTickets Int
@@ -20,24 +20,29 @@ model Event {
 }
 
 model PriceOffering {
-  id      String @default(uuid())
-  eventId String
-  name    String
-  price   Float
-  event   Event  @relation(fields: [eventId], references: [id])
+  id       String @default(uuid())
+  eventId  String
+  name     String
+  price    Float
+  event    Event  @relation(fields: [eventId], references: [id])
+  capacity Int
 
   @@id([id, eventId])
 }
 
 model Ticket {
-  id     String @id @default(uuid())
-  status Status
+  id        String   @id @default(uuid())
+  eventId   String
+  bookingId String?
+  status    Status
+  event     Event    @relation(fields: [eventId], references: [id])
+  booking   Booking? @relation(fields: [bookingId], references: [id])
 }
 
 model Booking {
   id         String   @id @default(uuid())
   userId     String
-  ticketIds  String[]
+  tickets    Ticket[]
   amountPaid Float
 }
 
