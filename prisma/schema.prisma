@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,8 +8,8 @@ datasource db {
 }
 
 model Event {
-  eventId              String   @id @default(uuid())
-  eventName            String
+  id                   String          @id @default(uuid())
+  title                String
   ticketIds            String[]
   venue                String
   dateTime             DateTime
@@ -26,31 +20,25 @@ model Event {
 }
 
 model PriceOffering {
-  offeringId String @default(uuid())
-  eventId    String
-  name       String
-  price      Float
-  event      Event   @relation(fields: [eventId], references: [eventId])
+  id      String @default(uuid())
+  eventId String
+  name    String
+  price   Float
+  event   Event  @relation(fields: [eventId], references: [id])
 
-  @@id([offeringId, eventId])
+  @@id([id, eventId])
 }
 
 model Ticket {
-  ticketId String @id @default(uuid())
-  status   Status
+  id     String @id @default(uuid())
+  status Status
 }
 
 model Booking {
-  bookingId  String   @id @default(uuid())
+  id         String   @id @default(uuid())
   userId     String
   ticketIds  String[]
   amountPaid Float
-}
-
-model User {
-  userId      String @id @default(uuid())
-  name        String
-  phoneNumber String
 }
 
 enum Status {
