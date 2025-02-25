@@ -4,67 +4,71 @@ import EventService from "../services/event.service";
 import redisClient from "../utils/redis";
 
 class EventController {
-    static create = asyncHandler(async (req: Request, res: Response) => {
-        const {
-            title,
-            venue,
-            dateTime,
-            totalNumberOfTickets,
-            description,
-            photoUrls,
-            priceOfferings,
-        } = req.body;
-        if (
-            !title ||
-            !venue ||
-            !dateTime ||
-            !totalNumberOfTickets ||
-            !description ||
-            !photoUrls ||
-            !priceOfferings
-        ) {
-            res.status(400);
-            throw new Error("Please provide all required fields");
-        }
+  static create = asyncHandler(async (req: Request, res: Response) => {
+    const {
+      title,
+      venue,
+      dateTime,
+      totalNumberOfTickets,
+      description,
+      photoUrls,
+      priceOfferings,
+    } = req.body;
+    if (
+      !title ||
+      !venue ||
+      !dateTime ||
+      !totalNumberOfTickets ||
+      !description ||
+      !photoUrls ||
+      !priceOfferings
+    ) {
+      res.status(400);
+      throw new Error("Please provide all required fields");
+    }
 
-        if (!Array.isArray(photoUrls) || !Array.isArray(priceOfferings)) {
-            res.status(400);
-            throw new Error("photoUrls and priceOfferings must be an array");
-        }
+    if (!Array.isArray(photoUrls) || !Array.isArray(priceOfferings)) {
+      res.status(400);
+      throw new Error("photoUrls and priceOfferings must be an array");
+    }
 
-        if (isNaN(new Date(dateTime).getTime())) {
-            res.status(400);
-            throw new Error("Invalid date time format");
-        }
+    if (isNaN(new Date(dateTime).getTime())) {
+      res.status(400);
+      throw new Error("Invalid date time format");
+    }
 
-        const event = await EventService.create({
-            title,
-            venue,
-            dateTime,
-            totalNumberOfTickets,
-            description,
-            photoUrls,
-            priceOfferings,
-        });
-        
-        res.status(201).json(event);
+    const event = await EventService.create({
+      title,
+      venue,
+      dateTime,
+      totalNumberOfTickets,
+      description,
+      photoUrls,
+      priceOfferings,
     });
 
-    static bookEvent = asyncHandler(async (req: Request, res: Response) => {
-        const { eventId, priceOfferingId, quantity } = req.body;
-        if (!eventId || !priceOfferingId || !quantity) {
-            res.status(400);
-            throw new Error('Please provide all required fields');
-        }
+    res.status(201).json(event);
+  });
 
-        if (isNaN(quantity) || quantity <= 0) {
-            res.status(400);
-            throw new Error('Quantity must be a positive number');
-        }
+  static bookEvent = asyncHandler(async (req: Request, res: Response) => {
+    const { eventId, priceOfferingId, quantity, userId } = req.body;
+    if (!eventId || !priceOfferingId || !quantity) {
+      res.status(400);
+      throw new Error("Please provide all required fields");
+    }
 
-        // ...
+    if (isNaN(quantity) || quantity <= 0) {
+      res.status(400);
+      throw new Error("Quantity must be a positive number");
+    }
+    const ticketIds = await EventService.bookEvent({
+      eventId,
+      priceOfferingId,
+      quantity,
+      userId,
     });
-
+    res.json(ticketIds);
+  });
 }
 
 export default EventController;
