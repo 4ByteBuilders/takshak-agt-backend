@@ -30,6 +30,11 @@ class EventService {
             return event;
         });
     }
+    
+    static async bookEvent({ eventId, priceOfferingId, quantity }){
+        // ...
+    }
+
 }
 
 export default EventService;
