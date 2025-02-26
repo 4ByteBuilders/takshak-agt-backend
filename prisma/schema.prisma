@@ -44,6 +44,7 @@ model Booking {
   userId     String
   tickets    Ticket[]
   amountPaid Float
+  paymentId  String?
 }
 
 enum Status {
