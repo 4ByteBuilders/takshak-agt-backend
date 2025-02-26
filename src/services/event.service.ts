@@ -87,6 +87,22 @@ class EventService {
       return ticketIds;
     });
   }
+
+  static async viewEvent({ eventId }) {
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      include: {
+        priceOfferings: true,
+      },
+    });
+
+    if (!event) {
+      throw new Error("Event not found");
+    }
+
+    return event;
+  }
+
 }
 
 export default EventService;

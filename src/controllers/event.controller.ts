@@ -69,6 +69,25 @@ class EventController {
     });
     res.json(ticketIds);
   });
+
+  static viewEvent = asyncHandler(async (req : Request, res : Response) => {
+    const eventId = req.query.eventId;
+
+    if(!eventId){
+      res.status(400);
+      throw new Error("Please provide eventId");
+    }
+
+    const eventData = await EventService.viewEvent({eventId});
+
+    if(!eventData){
+      throw new Error("Event not found");
+    }
+
+    res.json(eventData);
+
+  });
+
 }
 
 export default EventController;
