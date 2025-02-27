@@ -47,6 +47,15 @@ model Booking {
   paymentId  String?
 }
 
+model Message {
+  id        String   @id @default(uuid())
+  name      String
+  userId    String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}
+
 enum Status {
   AVAILABLE
   BOOKED

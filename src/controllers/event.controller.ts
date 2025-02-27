@@ -1,7 +1,6 @@
 import asyncHandler from "express-async-handler";
 import { Request, Response } from "express";
 import EventService from "../services/event.service";
-import redisClient from "../utils/redis";
 
 class EventController {
   static create = asyncHandler(async (req: Request, res: Response) => {
@@ -70,17 +69,17 @@ class EventController {
     res.json(ticketIds);
   });
 
-  static viewEvent = asyncHandler(async (req : Request, res : Response) => {
+  static viewEvent = asyncHandler(async (req: Request, res: Response) => {
     const eventId = req.query.eventId;
 
-    if(!eventId){
+    if (!eventId) {
       res.status(400);
       throw new Error("Please provide eventId");
     }
 
-    const eventData = await EventService.viewEvent({eventId});
+    const eventData = await EventService.viewEvent({ eventId });
 
-    if(!eventData){
+    if (!eventData) {
       throw new Error("Event not found");
     }
 

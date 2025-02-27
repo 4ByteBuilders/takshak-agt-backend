@@ -1,8 +1,9 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import eventRouter from './routes/event.routes';
+import policyRouter from './routes/policy.routes';
 import { errorHandler } from './middlewares/error.middleware';
-import cors from 'cors'; 
+import cors from 'cors';
 dotenv.config();
 
 const app = express();
@@ -16,6 +17,7 @@ app.get('/', (req, res) => {
 );
 
 app.use('/event', eventRouter);
+app.use('/policy', policyRouter);
 app.use(errorHandler);
 
 const PORT = process.env.PORT;
