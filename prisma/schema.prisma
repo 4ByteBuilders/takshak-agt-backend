@@ -40,11 +40,15 @@ model Ticket {
 }
 
 model Booking {
-  id         String   @id @default(uuid())
-  userId     String
-  tickets    Ticket[]
-  amountPaid Float
-  paymentId  String?
+  id                 String        @id @default(uuid())
+  userId             String
+  tickets            Ticket[]
+  amountPaid         Float
+  paymentStatus      PaymentStatus
+  paymentId          String?
+  createdAt          DateTime      @default(now())
+  numVerifiedAtVenue Int?
+  qrCode             String       @unique
 }
 
 model Message {
@@ -59,4 +63,11 @@ model Message {
 enum Status {
   AVAILABLE
   BOOKED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
 }
