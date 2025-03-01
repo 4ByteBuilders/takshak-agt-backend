@@ -49,43 +49,6 @@ class EventController {
     res.status(201).json(event);
   });
 
-  static bookEvent = asyncHandler(async (req: Request, res: Response) => {
-    const { eventId, priceOfferingId, quantity, userId } = req.body;
-    if (!eventId || !priceOfferingId || !quantity) {
-      res.status(400);
-      throw new Error("Please provide all required fields");
-    }
-
-    if (isNaN(quantity) || quantity <= 0) {
-      res.status(400);
-      throw new Error("Quantity must be a positive number");
-    }
-    const ticketIds = await EventService.bookEvent({
-      eventId,
-      priceOfferingId,
-      quantity,
-      userId,
-    });
-    res.json(ticketIds);
-  });
-
-  static viewEvent = asyncHandler(async (req: Request, res: Response) => {
-    const eventId = req.query.eventId;
-
-    if (!eventId) {
-      res.status(400);
-      throw new Error("Please provide eventId");
-    }
-
-    const eventData = await EventService.viewEvent({ eventId });
-
-    if (!eventData) {
-      throw new Error("Event not found");
-    }
-
-    res.json(eventData);
-
-  });
 
 }
 
