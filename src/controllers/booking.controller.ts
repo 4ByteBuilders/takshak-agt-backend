@@ -12,6 +12,12 @@ class BookingController {
 
     res.status(200).json(bookings);
   });
+  static getRemainingTickets = asyncHandler(
+    async (req: Request, res: Response) => {
+      const remTkts = await BookingService.getRemainingTickets();
+      res.status(200).json(remTkts);
+    }
+  );
 
   static getPendingBookings = asyncHandler(
     async (req: Request, res: Response) => {

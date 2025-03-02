@@ -9,6 +9,16 @@ Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY!;
 Cashfree.XEnvironment = Cashfree.Environment.SANDBOX;
 
 class BookingService {
+  static getRemainingTickets = async () => {
+    const event = await prisma.event.findFirst({
+      include: { tickets: { where: { status: "AVAILABLE" } } },
+    });
+    if (!event) return new Error("No Event found!!");
+    const lockedTickets = await redisClient.dbsize();
+    const res = event.tickets.length - lockedTickets;
+    return { remainingTickets: res };
+  };
+
   static getAmountAndTicketsCount = async (priceOfferingSelected: Object) => {
     let amount = 0;
     let ticketsCount = 0;
