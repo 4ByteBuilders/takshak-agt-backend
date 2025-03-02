@@ -71,6 +71,7 @@ class BookingService {
     }
 
     static createOrder = async ({ order_id, order_amount, user }) => {
+        const currentDate = getCurrentDateFormatted();
         const expiryDate = new Date();
         expiryDate.setMinutes(expiryDate.getMinutes() + 16);
         const orderExpiryTime = expiryDate.toISOString();
@@ -92,16 +93,17 @@ class BookingService {
         };
 
         return Cashfree.PGCreateOrder("2023-08-01", request).then((response) => {
-            return { status: true, message: 'Order Created successfully:' + response.data };
+            return { status: true, message: 'Order created successfully:', resByCashfree: response.data };
         }).catch((error) => {
-            return { status: false, message: 'Error:' + error.response.data.message };
+            return { status: false, message: 'Error:' + (error.response.data.message as string), resByCashfree: error.response.data };
         });
     };
 
     static getOrder = async (order_id: string) => {
+        const currentDate = getCurrentDateFormatted();
 
         Cashfree.PGFetchOrder("2023-08-01", order_id).then((response) => {
-            return { status: true, message: 'Order fetched successfully:' + response.data };
+            return { status: true, message: 'Order fetched successfully:', resByCashfree: response.data };
         }).catch((error) => {
             return { status: false, message: 'Error:' + error.response.data.message };
         });

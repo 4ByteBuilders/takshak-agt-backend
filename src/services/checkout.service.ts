@@ -30,7 +30,7 @@ class CheckoutService {
             const ticketIds = availableTickets.map((ticket) => ticket.id);
             const pipeline = redisClient.pipeline();
             ticketIds.forEach((ticketId) => {
-                pipeline.set(`locked_ticket:${eventId}:${ticketId}`, user.id, "EX", 600);
+                pipeline.set(`locked_ticket:${eventId}:${ticketId}`, user.id, "EX", 960);
             });
             await pipeline.exec();
 
@@ -58,7 +58,14 @@ class CheckoutService {
             if (!response.status) {
                 throw new Error(response.message);
             }
-
+            await tx.booking.update({
+                where: {
+                    id: booking.id
+                },
+                data: {
+                    paymentSessionId: response.resByCashfree.payment_session_id
+                }
+            });
             return response;
         });
     }

@@ -41,13 +41,11 @@ class BookingController {
             }
         );
         if (response.status) {
-            res.status(200).json({ message: 'Order created successfully' });
+            res.status(200).json({ message: 'Order created successfully', data: response.resByCashfree });
         } else {
             res.status(400).json({ message: response.message });
         }
-
-    }
-    );
+    });
 }
 
 export default BookingController;

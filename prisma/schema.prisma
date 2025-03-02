@@ -45,10 +45,10 @@ model Booking {
   tickets            Ticket[]
   amountPaid         Float
   paymentStatus      PaymentStatus
-  paymentId          String?
+  paymentSessionId   String?
   createdAt          DateTime      @default(now())
   numVerifiedAtVenue Int?
-  qrCode             String       @unique
+  qrCode             String        @unique
 }
 
 model Message {
