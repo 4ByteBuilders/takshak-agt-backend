@@ -4,15 +4,25 @@ import BookingService from "../services/booking.service";
 import CheckoutService from "../services/checkout.service";
 
 class BookingController {
+    
     static getBookings = asyncHandler(async (req: Request, res: Response) => {
-        const { userId } = req.body;
-
+        const userId = req.query.userId as string;
         const bookings = await BookingService.getBookings({
             userId
         });
 
         res.status(200).json(bookings);
 
+    });
+
+    static getPendingBookings = asyncHandler(async (req: Request, res: Response) => {
+        const userId = req.query.userId as string;
+        const eventId = req.query.eventId as string;
+        const bookings = await BookingService.getPendingBookings({
+            userId,
+            eventId
+        });
+        res.status(200).json(bookings);
     });
 
     static verifyBooking = asyncHandler(async (req: Request, res: Response) => {
