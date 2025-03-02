@@ -9,48 +9,6 @@ Cashfree.XEnvironment = Cashfree.Environment.SANDBOX;
 
 class BookingService {
 
-    static async createBookingTableEntry({ eventId, quantity, userId }) {
-        return await prisma.$transaction(async (prisma) => {
-            const tickets = await prisma.ticket.findMany({
-                where: {
-                    eventId,
-                    status: 'AVAILABLE'
-                },
-                take: quantity
-            });
-
-            if (tickets.length < quantity) {
-                throw new Error('Not enough tickets available');
-            }
-
-            const ticketIds = tickets.map(ticket => ticket.id);
-
-            await prisma.ticket.updateMany({
-                where: {
-                    id: { in: ticketIds }
-                },
-                data: {
-                    status: 'BOOKED'
-                }
-            });
-
-            const booking = await prisma.booking.create({
-                data: {
-                    userId,
-                    tickets: {
-                        connect: ticketIds.map(id => ({ id }))
-                    },
-                    amountPaid: 696969, //just a temporary thing
-                    paymentStatus: 'PENDING',
-                    numVerifiedAtVenue: 0,
-                    qrCode: uuidv4().slice(0, 10)
-                }
-            });
-
-            return booking;
-        });
-    }
-
     static getAmountAndTicketsCount = async (priceOfferingSelected: Object) => {
         let amount = 0;
         let ticketsCount = 0;
