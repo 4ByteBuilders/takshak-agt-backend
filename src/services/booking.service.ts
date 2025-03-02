@@ -71,7 +71,6 @@ class BookingService {
     }
 
     static createOrder = async ({ order_id, order_amount, user }) => {
-        const currentDate = getCurrentDateFormatted();
         const expiryDate = new Date();
         expiryDate.setMinutes(expiryDate.getMinutes() + 16);
         const orderExpiryTime = expiryDate.toISOString();
@@ -100,7 +99,6 @@ class BookingService {
     };
 
     static getOrder = async (order_id: string) => {
-        const currentDate = getCurrentDateFormatted();
 
         Cashfree.PGFetchOrder("2023-08-01", order_id).then((response) => {
             return { status: true, message: 'Order fetched successfully:' + response.data };
