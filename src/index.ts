@@ -5,13 +5,7 @@ import policyRouter from "./routes/policy.routes";
 import bookingRouter from "./routes/booking.routes";
 import { errorHandler } from "./middlewares/error.middleware";
 import cors from "cors";
-console.log("Hello world");
 dotenv.config();
-console.log(process.env.DATABASE_URL);
-console.log(process.env.PORT);
-console.log(process.env.REDIS_URL);
-console.log(process.env.SUPABASE_URL);
-console.log(process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 const app = express();
 app.use(express.json());

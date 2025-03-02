@@ -6,8 +6,14 @@ const router = Router();
 
 router.get("/", authMiddleware, BookingController.getBookings);
 router.post("/create-order", authMiddleware, BookingController.createOrder);
-router.post('/verify-booking', BookingController.verifyBooking);
-router.post('/check-in', BookingController.checkIn);
-router.get('/get-bookings', authMiddleware, BookingController.getBookings);
-router.get('/get-pending-bookings', authMiddleware, BookingController.getPendingBookings);
+router.post("/confirm-order", BookingController.confirmBooking);
+
+router.post("/verify-booking", BookingController.verifyBooking);
+router.post("/check-in", BookingController.checkIn);
+router.get("/get-bookings", authMiddleware, BookingController.getBookings);
+router.get(
+  "/get-pending-bookings",
+  authMiddleware,
+  BookingController.getPendingBookings
+);
 export default router;
