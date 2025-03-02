@@ -38,6 +38,9 @@ class EventService {
                 gt: new Date(),
             },
             },
+            include:{
+                priceOfferings: true
+            },
             orderBy: {
             dateTime: 'asc',
             },
