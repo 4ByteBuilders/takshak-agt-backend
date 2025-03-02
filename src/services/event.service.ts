@@ -30,6 +30,20 @@ class EventService {
             return event;
         });
     }
+
+    static async getLatestEvent() {
+        return await prisma.event.findFirst({
+            where: {
+            dateTime: {
+                gt: new Date(),
+            },
+            },
+            orderBy: {
+            dateTime: 'asc',
+            },
+        });
+    }
+
 }
 
 export default EventService;

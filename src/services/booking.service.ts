@@ -110,15 +110,47 @@ class BookingService {
     };
 
     static async getBookings({ userId }) {
-        const bookings = prisma.booking.findMany({
+        const bookings = await prisma.booking.findMany({
             where: {
                 userId
             },
             include: {
                 tickets: true
+            },
+            orderBy: {
+                createdAt: 'desc'
             }
         });
         return bookings;
+    }
+
+    static async getPendingBookings({ userId, eventId }) {
+
+        const sixteenMinutesAgo = new Date();
+        sixteenMinutesAgo.setMinutes(sixteenMinutesAgo.getMinutes() - 16);
+        
+        const bookings = await prisma.booking.findMany({
+            where: {
+            userId,
+            paymentStatus: 'PENDING',
+            createdAt: {
+                gte: sixteenMinutesAgo
+            }
+            },
+            include: {
+            tickets: true
+            },
+            orderBy: {
+            createdAt: 'desc'
+            }
+        });
+
+        const bookingsForCurrentEvent = bookings.filter((booking) => {
+            booking.tickets[0].eventId === eventId
+        });
+
+        return bookingsForCurrentEvent;
+
     }
 
     static async verifyBooking({ qr }) {

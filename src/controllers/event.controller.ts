@@ -48,7 +48,16 @@ class EventController {
 
     res.status(201).json(event);
   });
-
+  
+  static getLatestEvent = asyncHandler(async (req: Request, res: Response) => {
+    const event = await EventService.getLatestEvent();
+    if(event){
+      res.status(200).json(event);
+    }
+    else{
+      res.status(404).json({message: 'No upcoming events found'});
+    }
+  });
 
 }
 
