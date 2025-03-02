@@ -103,10 +103,13 @@ class BookingService {
             }
         });
 
-        const bookingsForCurrentEvent = bookings.filter((booking) => {
-            booking.tickets[0].eventId === eventId
-        });
+        console.log(bookings[0].tickets[0].eventId === eventId);
 
+        const bookingsForCurrentEvent = bookings.filter((booking) => {
+            const bookingEventId = booking.tickets[0].eventId as string;
+            return bookingEventId === eventId.toString();
+        });
+        
         return bookingsForCurrentEvent;
 
     }
