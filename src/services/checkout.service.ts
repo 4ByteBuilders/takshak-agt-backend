@@ -5,7 +5,13 @@ import { v4 as uuidv4 } from "uuid";
 import BookingService from "./booking.service";
 
 class CheckoutService {
-  static async getOrderReady({ eventId, user, ticketCounts, totalAmount, priceOfferings }) {
+  static async getOrderReady({
+    eventId,
+    user,
+    ticketCounts,
+    totalAmount,
+    priceOfferings,
+  }) {
     return await prisma.$transaction(async (tx) => {
       const lockedTickets = await redisClient.keys(`locked_ticket:*`);
 
@@ -27,12 +33,6 @@ class CheckoutService {
 
       const ticketIds = availableTickets.map((ticket) => ticket.id);
       const pipeline = redisClient.pipeline();
-      ticketIds.forEach((ticketId) => {
-        pipeline.set(`locked_ticket:${ticketId}`, user.id, "EX", 960);
-      });
-      await pipeline.exec();
-
-      // Create a booking entry
       const booking = await tx.booking.create({
         data: {
           userId: user.id,
@@ -47,6 +47,17 @@ class CheckoutService {
           qrCode: uuidv4().slice(0, 10),
         },
       });
+      ticketIds.forEach((ticketId) => {
+        pipeline.set(
+          `locked_ticket:${booking.id}:${ticketId}`,
+          user.id,
+          "EX",
+          60
+        );
+      });
+      await pipeline.exec();
+
+      // Create a booking entry
 
       // Create order in Cashfree
       const response = await BookingService.createOrder({
