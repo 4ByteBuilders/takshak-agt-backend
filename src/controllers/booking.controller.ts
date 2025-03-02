@@ -63,6 +63,7 @@ class BookingController {
       user,
       ticketCounts: orderDetails.ticketsCount,
       totalAmount: orderDetails.amount,
+      priceOfferings
     });
     if (response.status) {
       res.status(200).json({

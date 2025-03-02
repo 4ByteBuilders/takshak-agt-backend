@@ -17,6 +17,7 @@ model Event {
   description          String
   photoUrls            String[]
   priceOfferings       PriceOffering[]
+  Booking              Booking[]
 }
 
 model PriceOffering {
@@ -40,15 +41,18 @@ model Ticket {
 }
 
 model Booking {
-  id                 String        @id @default(uuid())
-  userId             String
-  tickets            Ticket[]
-  amountPaid         Float
-  paymentStatus      PaymentStatus
-  paymentSessionId   String?
-  createdAt          DateTime      @default(now())
-  numVerifiedAtVenue Int?
-  qrCode             String        @unique
+  id                    String        @id @default(uuid())
+  userId                String
+  eventId               String
+  priceOfferingSelected Json
+  tickets               Ticket[]
+  amountPaid            Float
+  paymentStatus         PaymentStatus
+  paymentSessionId      String?
+  createdAt             DateTime      @default(now())
+  numVerifiedAtVenue    Int?
+  qrCode                String        @unique
+  event                 Event         @relation(fields: [eventId], references: [id])
 }
 
 model Message {

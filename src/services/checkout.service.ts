@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import BookingService from "./booking.service";
 
 class CheckoutService {
-  static async getOrderReady({ eventId, user, ticketCounts, totalAmount }) {
+  static async getOrderReady({ eventId, user, ticketCounts, totalAmount, priceOfferings }) {
     return await prisma.$transaction(async (tx) => {
       const lockedTickets = await redisClient.keys(`locked_ticket:*`);
 
@@ -40,6 +40,8 @@ class CheckoutService {
             connect: ticketIds.map((id) => ({ id })),
           },
           amountPaid: totalAmount,
+          eventId,
+          priceOfferingSelected: JSON.stringify(priceOfferings),
           paymentStatus: "PENDING",
           numVerifiedAtVenue: 0,
           qrCode: uuidv4().slice(0, 10),
