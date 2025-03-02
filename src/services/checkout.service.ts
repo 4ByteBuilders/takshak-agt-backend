@@ -47,12 +47,15 @@ class CheckoutService {
           qrCode: uuidv4().slice(0, 10),
         },
       });
+      
+      console.log(booking.id);
+
       ticketIds.forEach((ticketId) => {
         pipeline.set(
           `locked_ticket:${booking.id}:${ticketId}`,
           user.id,
           "EX",
-          60
+          160
         );
       });
       await pipeline.exec();

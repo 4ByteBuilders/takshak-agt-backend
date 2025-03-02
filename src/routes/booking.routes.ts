@@ -9,6 +9,7 @@ router.get("/remaining-tickets", BookingController.getRemainingTickets);
 
 router.post("/create-order", authMiddleware, BookingController.createOrder);
 router.post("/confirm-order", BookingController.confirmBooking);
+router.post("/cancel-booking", BookingController.cancelBooking);
 
 router.post("/verify-booking", BookingController.verifyBooking);
 router.post("/check-in", BookingController.checkIn);

@@ -74,4 +74,5 @@ enum PaymentStatus {
   PAID
   FAILED
   EXPIRED
+  CANCELLED
 }
