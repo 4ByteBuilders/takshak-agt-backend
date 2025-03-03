@@ -17,10 +17,21 @@ redisSubsriber.on("message", async (channel, message) => {
     console.log(`Key expired: ${message}`);
     const msg = message.split(":");
     const bookingId = msg[1];
+    const ticketId = msg[2];
     try {
       await prisma.booking.update({
         where: { id: bookingId },
         data: { paymentStatus: "EXPIRED" },
+      });
+      await prisma.$transaction(async (prisma) => {
+        await prisma.booking.update({
+          where: { id: bookingId },
+          data: { paymentStatus: "EXPIRED" },
+        });
+        await prisma.ticket.update({
+          where: { id: ticketId },
+          data: { status: "AVAILABLE" },
+        });
       });
       console.log(`Booking ${bookingId} status set to expired!!`);
     } catch (err) {

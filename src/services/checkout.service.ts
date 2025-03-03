@@ -57,9 +57,6 @@ class CheckoutService {
       });
       await pipeline.exec();
 
-      // Create a booking entry
-
-      // Create order in Cashfree
       const response = await BookingService.createOrder({
         order_id: booking.id,
         order_amount: totalAmount,

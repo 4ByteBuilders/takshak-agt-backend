@@ -38,6 +38,7 @@ class BookingController {
 
   static verifyBooking = asyncHandler(async (req: Request, res: Response) => {
     const { qr } = req.body;
+    console.log(qr);
     const booking = await BookingService.verifyBooking({ qr });
     res.status(200).json(booking);
   });
@@ -63,7 +64,7 @@ class BookingController {
       user,
       ticketCounts: orderDetails.ticketsCount,
       totalAmount: orderDetails.amount,
-      priceOfferings
+      priceOfferings,
     });
     if (response.status) {
       res.status(200).json({
