@@ -19,4 +19,5 @@ router.get(
   authMiddleware,
   BookingController.getPendingBookings
 );
+
 export default router;
