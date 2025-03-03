@@ -14,9 +14,6 @@ router.post("/cancel-booking", BookingController.cancelBooking);
 router.post("/verify-booking", BookingController.verifyBooking);
 router.post("/check-in", BookingController.checkIn);
 router.get("/get-bookings", authMiddleware, BookingController.getBookings);
-router.get(
-  "/get-pending-bookings",
-  authMiddleware,
-  BookingController.getPendingBookings
-);
+router.get("/get-pending-bookings", authMiddleware, BookingController.getPendingBookings);
+router.get("/payment-status", authMiddleware, BookingController.getPaymentStatus);
 export default router;
