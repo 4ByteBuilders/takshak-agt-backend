@@ -73,7 +73,6 @@ class BookingService {
   };
 
   static createOrder = async ({ order_id, order_amount, user }) => {
-    const currentDate = getCurrentDateFormatted();
     const expiryDate = new Date();
     expiryDate.setMinutes(expiryDate.getMinutes() + 16);
     const orderExpiryTime = expiryDate.toISOString();
@@ -90,7 +89,7 @@ class BookingService {
       },
       order_expiry_time: orderExpiryTime,
       order_meta: {
-        return_url: `https://www.cashfree.com/devstudio/preview/pg/web/checkout?order_id=${order_id}`,
+        return_url: `${process.env.FRONTEND_URL}/payment-status?order_id=${order_id}&status={order_status}`,
       },
     };
 
@@ -110,6 +109,19 @@ class BookingService {
         };
       });
   };
+
+  static getPaymentStatus = async (order_id: string) => {
+    const orderResponse = await Cashfree.PGOrderFetchPayments("2023-08-01", order_id).then((response) => {
+      return response.data;
+    }).catch((error) => {
+      console.log(error);
+      return { status: false, error: 'Error fetching payment status' };
+    });
+
+    console.log(orderResponse);
+    return orderResponse;
+  }
+
   static confirmOrder = async (bookingId: string) => {
     return await prisma.$transaction(async (prisma) => {
       const booking = await prisma.booking.findUnique({
@@ -139,8 +151,6 @@ class BookingService {
     });
   };
   static getOrder = async (order_id: string) => {
-    const currentDate = getCurrentDateFormatted();
-
     Cashfree.PGFetchOrder("2023-08-01", order_id)
       .then((response) => {
         return {
