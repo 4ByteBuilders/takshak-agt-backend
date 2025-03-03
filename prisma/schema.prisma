@@ -15,7 +15,7 @@ model Event {
   dateTime             DateTime
   totalNumberOfTickets Int
   description          String
-  photoUrls            String[]
+  photoUrls            Json
   priceOfferings       PriceOffering[]
   Booking              Booking[]
 }

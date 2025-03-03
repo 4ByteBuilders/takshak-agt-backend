@@ -4,6 +4,6 @@ import AdminController from "../controllers/admin.controller";
 
 const router = Router();
 
-router.post("/create", authMiddlewareAdmin, AdminController.create);
+router.post("/create-event", authMiddlewareAdmin, AdminController.createEvent);
 
 export default router;

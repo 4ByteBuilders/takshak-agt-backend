@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import AdminService from "../services/admin.service";
 
 class AdminController {
-    static create = asyncHandler(async (req: Request, res: Response) => {
+    static createEvent = asyncHandler(async (req: Request, res: Response) => {
         const {
             title,
             venue,
@@ -26,9 +26,9 @@ class AdminController {
             throw new Error("Please provide all required fields");
         }
 
-        if (!Array.isArray(photoUrls) || !Array.isArray(priceOfferings)) {
+        if (typeof photoUrls !== 'object' || !Array.isArray(priceOfferings)) {
             res.status(400);
-            throw new Error("photoUrls and priceOfferings must be an array");
+            throw new Error("photoUrls must be an object and priceOfferings must be an array");
         }
 
         if (isNaN(new Date(dateTime).getTime())) {
@@ -36,7 +36,7 @@ class AdminController {
             throw new Error("Invalid date time format");
         }
 
-        const event = await AdminService.create({
+        const event = await AdminService.createEvent({
             title,
             venue,
             dateTime,
@@ -48,7 +48,6 @@ class AdminController {
 
         res.status(201).json(event);
     });
-    
 }
 
 export default AdminController;

@@ -2,7 +2,7 @@ import { Status } from "@prisma/client";
 import prisma from "../utils/prisma";
 
 class AdminService {
-    static async create({ title, venue, dateTime, totalNumberOfTickets, description, photoUrls, priceOfferings }) {
+    static async createEvent({ title, venue, dateTime, totalNumberOfTickets, description, photoUrls, priceOfferings }) {
         return await prisma.$transaction(async (tx) => {
 
             const event = await tx.event.create({
@@ -12,7 +12,7 @@ class AdminService {
                     dateTime,
                     totalNumberOfTickets,
                     description,
-                    photoUrls,
+                    photoUrls : JSON.stringify(photoUrls),
                     priceOfferings: {
                         create: priceOfferings,
                     },
