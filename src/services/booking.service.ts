@@ -172,11 +172,28 @@ class BookingService {
   static async getPendingBookings({ userId, eventId }) {
     const sixteenMinutesAgo = new Date();
     sixteenMinutesAgo.setMinutes(sixteenMinutesAgo.getMinutes() - 16);
-    // populate event
-    const bookings = await prisma.booking.findMany({
+    if (eventId) {
+      return await prisma.booking.findFirst({
+        where: {
+          userId,
+          eventId,
+          paymentStatus: "PENDING",
+          createdAt: {
+            gte: sixteenMinutesAgo,
+          },
+        },
+
+        include: {
+          event: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+    }
+    return await prisma.booking.findMany({
       where: {
         userId,
-        eventId,
         paymentStatus: "PENDING",
         createdAt: {
           gte: sixteenMinutesAgo,
@@ -190,8 +207,6 @@ class BookingService {
         createdAt: "desc",
       },
     });
-
-    return bookings;
   }
 
   static async verifyBooking({ qr }) {
