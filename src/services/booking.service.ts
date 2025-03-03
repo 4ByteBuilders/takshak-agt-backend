@@ -243,8 +243,14 @@ class BookingService {
     if (!booking) {
       throw new Error("Booking not found");
     }
-
-    if (checkedInCount + booking.numVerifiedAtVenue > booking.tickets.length) {
+    console.log(checkedInCount);
+    console.log(booking.numVerifiedAtVenue);
+    console.log(booking.tickets.length);
+    const checkedInCountNumber = Number(checkedInCount);
+    if (
+      checkedInCountNumber + booking.numVerifiedAtVenue >
+      booking.tickets.length
+    ) {
       throw new Error("Invalid check-in count");
     }
 
@@ -254,11 +260,11 @@ class BookingService {
       },
       data: {
         numVerifiedAtVenue: {
-          increment: checkedInCount,
+          increment: checkedInCountNumber,
         },
       },
     });
-
+    booking.numVerifiedAtVenue += checkedInCountNumber;
     return booking;
   }
 }

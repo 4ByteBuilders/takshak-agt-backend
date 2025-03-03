@@ -52,6 +52,7 @@ class BookingController {
 
   static checkIn = asyncHandler(async (req: Request, res: Response) => {
     const { booking_id, checkedInCount } = req.body;
+    console.log(booking_id, checkedInCount);
     const booking = await BookingService.checkIn({
       booking_id,
       checkedInCount,
