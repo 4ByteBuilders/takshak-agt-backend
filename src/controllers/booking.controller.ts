@@ -31,6 +31,14 @@ class BookingController {
     }
   );
 
+  static getPaymentStatus = asyncHandler(
+    async (req: Request, res: Response) => {
+      const orderId = req.query.order_id as string;
+      const paymentStatus = await BookingService.getPaymentStatus(orderId);
+      res.status(200).json(paymentStatus);
+    }
+  );
+
   static confirmBooking = asyncHandler(async (req: Request, res: Response) => {
     const { bookingId } = req.body;
     const booking = await BookingService.confirmOrder(bookingId);
@@ -52,6 +60,7 @@ class BookingController {
 
   static checkIn = asyncHandler(async (req: Request, res: Response) => {
     const { booking_id, checkedInCount } = req.body;
+    console.log(booking_id, checkedInCount);
     const booking = await BookingService.checkIn({
       booking_id,
       checkedInCount,
