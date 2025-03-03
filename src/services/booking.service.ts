@@ -10,7 +10,6 @@ Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY!;
 Cashfree.XEnvironment = Cashfree.Environment.SANDBOX;
 
 class BookingService {
-
   static getRemainingTickets = async () => {
     const event = await prisma.event.findFirst({
       include: { tickets: { where: { status: "AVAILABLE" } } },
@@ -58,7 +57,6 @@ class BookingService {
         where: { id: bookingId },
         data: { paymentStatus: PaymentStatus.CANCELLED },
       });
-
 
       //   REMOVE LOCKED TICKETS FROM REDIS
       const pipeline = redisClient.pipeline();
@@ -125,9 +123,14 @@ class BookingService {
         where: { id: bookingId },
         data: { paymentStatus: "PAID" },
       });
+
       const pipeline = redisClient.pipeline();
-      booking.tickets.forEach((ticket) => {
+      booking.tickets.forEach(async (ticket) => {
         console.log(ticket.id);
+        await prisma.ticket.update({
+          where: { id: ticket.id },
+          data: { status: "BOOKED" },
+        });
         pipeline.del(`locked_ticket:${bookingId}:${ticket.id}`);
       });
       await pipeline.exec();
@@ -213,7 +216,7 @@ class BookingService {
     const booking = await prisma.booking.findUnique({
       where: {
         qrCode: qr,
-        paymentStatus: "PAID"
+        paymentStatus: "PAID",
       },
       include: {
         tickets: true,
