@@ -2,6 +2,7 @@ import prisma from "../utils/prisma";
 import { v4 as uuidv4 } from "uuid";
 import { Cashfree } from "cashfree-pg";
 import { getCurrentDateFormatted } from "../utils/dateUtils";
+import { PaymentStatus } from "@prisma/client";
 import redisClient from "../utils/redis";
 
 Cashfree.XClientId = process.env.CASHFREE_CLIENT_ID!;
@@ -9,6 +10,7 @@ Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY!;
 Cashfree.XEnvironment = Cashfree.Environment.SANDBOX;
 
 class BookingService {
+
   static getRemainingTickets = async () => {
     const event = await prisma.event.findFirst({
       include: { tickets: { where: { status: "AVAILABLE" } } },
@@ -37,6 +39,39 @@ class BookingService {
     });
 
     return { amount, ticketsCount };
+  };
+
+  static cancelBooking = async (bookingId: string) => {
+    return await prisma.$transaction(async (prisma) => {
+      console.log("TESTING...");
+      console.log(bookingId);
+      const booking = await prisma.booking.findUnique({
+        where: { id: bookingId },
+        include: { tickets: true },
+      });
+
+      if (!booking) {
+        throw new Error("Booking not found!!");
+      }
+
+      await prisma.booking.update({
+        where: { id: bookingId },
+        data: { paymentStatus: PaymentStatus.CANCELLED },
+      });
+
+
+      //   REMOVE LOCKED TICKETS FROM REDIS
+      const pipeline = redisClient.pipeline();
+
+      booking.tickets.forEach((ticket) => {
+        pipeline.del(`locked_ticket:${bookingId}:${ticket.id}`);
+      });
+
+      await pipeline.exec();
+
+      booking.paymentStatus = PaymentStatus.CANCELLED;
+      return booking;
+    });
   };
 
   static createOrder = async ({ order_id, order_amount, user }) => {
@@ -137,31 +172,48 @@ class BookingService {
   static async getPendingBookings({ userId, eventId }) {
     const sixteenMinutesAgo = new Date();
     sixteenMinutesAgo.setMinutes(sixteenMinutesAgo.getMinutes() - 16);
+    if (eventId) {
+      return await prisma.booking.findFirst({
+        where: {
+          userId,
+          eventId,
+          paymentStatus: "PENDING",
+          createdAt: {
+            gte: sixteenMinutesAgo,
+          },
+        },
 
-    const bookings = await prisma.booking.findFirst({
+        include: {
+          event: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+    }
+    return await prisma.booking.findMany({
       where: {
         userId,
-        eventId,
         paymentStatus: "PENDING",
         createdAt: {
           gte: sixteenMinutesAgo,
         },
       },
+
       include: {
-        tickets: true,
+        event: true,
       },
       orderBy: {
         createdAt: "desc",
       },
     });
-
-    return bookings;
   }
 
   static async verifyBooking({ qr }) {
     const booking = await prisma.booking.findUnique({
       where: {
         qrCode: qr,
+        paymentStatus: "PAID"
       },
       include: {
         tickets: true,

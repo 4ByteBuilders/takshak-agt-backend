@@ -21,7 +21,7 @@ class BookingController {
 
   static getPendingBookings = asyncHandler(
     async (req: Request, res: Response) => {
-      const userId = req.query.userId as string;
+      const userId = req.user.id;
       const eventId = req.query.eventId as string;
       const bookings = await BookingService.getPendingBookings({
         userId,
@@ -30,10 +30,17 @@ class BookingController {
       res.status(200).json(bookings);
     }
   );
+
   static confirmBooking = asyncHandler(async (req: Request, res: Response) => {
     const { bookingId } = req.body;
     const booking = await BookingService.confirmOrder(bookingId);
     res.status(201).json(booking);
+  });
+
+  static cancelBooking = asyncHandler(async (req: Request, res: Response) => {
+    const { bookingId } = req.body;
+    const booking = await BookingService.cancelBooking(bookingId);
+    res.status(200).json(booking);
   });
 
   static verifyBooking = asyncHandler(async (req: Request, res: Response) => {
