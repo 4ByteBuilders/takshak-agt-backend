@@ -34,15 +34,15 @@ class EventService {
     static async getLatestEvent() {
         return await prisma.event.findFirst({
             where: {
-            dateTime: {
-                gt: new Date(),
+                dateTime: {
+                    gt: new Date(),
+                },
             },
-            },
-            include:{
+            include: {
                 priceOfferings: true
             },
             orderBy: {
-            dateTime: 'asc',
+                dateTime: 'asc',
             },
         });
     }
