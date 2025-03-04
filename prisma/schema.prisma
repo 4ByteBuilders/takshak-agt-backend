@@ -49,6 +49,7 @@ model Booking {
   amountPaid            Float
   paymentStatus         PaymentStatus
   paymentSessionId      String?
+  orderExpiryTime       DateTime      @default(now())
   createdAt             DateTime      @default(now())
   numVerifiedAtVenue    Int?
   qrCode                String        @unique
