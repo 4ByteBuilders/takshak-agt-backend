@@ -124,6 +124,7 @@ class BookingService {
 
   static updatePaymentStatus = async (req) => {
     try {
+      console.log(req.headers);
       Cashfree.PGVerifyWebhookSignature(req.headers["x-webhook-signature"], req.rawBody, req.headers["x-webhook-timestamp"])
       const data = req.body;
       console.log(data);
