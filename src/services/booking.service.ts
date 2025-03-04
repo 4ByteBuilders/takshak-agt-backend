@@ -269,7 +269,7 @@ class BookingService {
         return offering
           ? { name: offering.name, price: offering.price, quantity: quantity as number }
           : { name: "Unknown", price: 0, quantity: quantity as number };
-      })[0];
+      });
 
       return {
         ...booking,
