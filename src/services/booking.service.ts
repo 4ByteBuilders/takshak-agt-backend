@@ -142,15 +142,12 @@ class BookingService {
         throw new Error("Booking not found!!");
       }
 
-      // Update payment status
       await tx.booking.update({
         where: { id: bookingId },
         data: { paymentStatus: "PAID" },
       });
 
       const pipeline = redisClient.pipeline();
-
-      // Use for...of instead of forEach to handle async/await properly
       for (const ticket of booking.tickets) {
         console.log(ticket.id);
         await tx.ticket.update({
@@ -160,9 +157,8 @@ class BookingService {
         pipeline.del(`locked_ticket:${bookingId}:${ticket.id}`);
       }
 
-      await pipeline.exec(); // Execute Redis pipeline commands
+      await pipeline.exec();
 
-      // Reflect payment status update in the returned object
       return { ...booking, paymentStatus: "PAID" };
     });
   };
