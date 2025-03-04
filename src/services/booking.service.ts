@@ -122,6 +122,17 @@ class BookingService {
     return orderResponse;
   }
 
+  static updatePaymentStatus = async (req) => {
+    try {
+      Cashfree.PGVerifyWebhookSignature(req.headers["x-webhook-signature"], req.rawBody, req.headers["x-webhook-timestamp"])
+      const data = req.body;
+      console.log(data);
+    } catch (err) {
+      console.log(err.message);
+      throw new Error("Invalid Signature");
+    }
+  }
+
   static confirmOrder = async (bookingId: string) => {
     return await prisma.$transaction(async (prisma) => {
       const booking = await prisma.booking.findUnique({
