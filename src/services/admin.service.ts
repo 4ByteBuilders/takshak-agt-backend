@@ -26,9 +26,29 @@ class AdminService {
 
             await tx.ticket.createMany({ data: tickets });
 
+            // ADD LOGIC TO UPLOAD IMAGES TO SUPABASE BUCKET
+
             return event;
         });
     }
+
+    static async getAllEvents() {
+        return await prisma.event.findMany({
+            include: {
+                priceOfferings: true,
+            },
+        });
+    }
+
+    static async deleteEvent({eventId}) {
+        // Delete event and all associated tickets
+        // Delete images from supabase bucket
+        // Delete price offerings
+        
+        // temporary return statement
+        return eventId;
+    };
+
 }
 
 export default AdminService;

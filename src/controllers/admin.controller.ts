@@ -48,6 +48,28 @@ class AdminController {
 
         res.status(201).json(event);
     });
+    
+    static checkAdmin = asyncHandler(async (req: Request, res: Response) => {
+        console.log(`Admin ${req.user.email} logged in`);
+        res.status(200).send({isAdmin : true});
+    });
+
+    static getAllEvents = asyncHandler(async (req: Request, res: Response) => {
+        const events = await AdminService.getAllEvents();
+        res.json(events);
+    });
+
+    static deleteEvent = asyncHandler(async (req: Request, res: Response) => {
+        const { eventId } = req.body;
+        if (!eventId) {
+            res.status(400);
+            throw new Error("Please provide eventId");
+        }
+
+        await AdminService.deleteEvent({eventId});
+        res.status(204).send();
+    });
+
 }
 
 export default AdminController;

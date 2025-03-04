@@ -37,6 +37,7 @@ const authMiddlewareAdmin = async (req: Request, res: Response, next: NextFuncti
   const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
+    console.log("No token");
     res.status(401).json({ error: "Unauthorized - No token provided" });
     return;
   }
@@ -44,6 +45,7 @@ const authMiddlewareAdmin = async (req: Request, res: Response, next: NextFuncti
   const { data, error } = await supabase.auth.getUser(token);
 
   if (error || !data?.user) {
+    console.log("No userdata");
     res.status(401).json({ error: "Unauthorized - Invalid token" });
     return;
   }
