@@ -52,7 +52,7 @@ class CheckoutService {
             `locked_ticket:${booking.id}:${ticketId}`,
             user.id,
             "EX",
-            160
+            1120
           );
         });
         await pipeline.exec();

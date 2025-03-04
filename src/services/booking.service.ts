@@ -122,46 +122,51 @@ class BookingService {
     return orderResponse;
   }
 
-  static updatePaymentStatus = async (data: any) => {
+  static updatePaymentStatus = async ({ signature, body, timestamp }) => {
     try {
-      console.log(data.headers);
-      Cashfree.PGVerifyWebhookSignature(data.headers["x-webhook-signature"], data.rawBody, data.headers["x-webhook-timestamp"])
-      const dataBody = data.body;
-      console.log(dataBody);
+      Cashfree.PGVerifyWebhookSignature(signature, body, timestamp);
     } catch (err) {
-      console.log(err.message);
-      throw new Error("Invalid Signature");
+      console.log(err.message)
+      throw new Error('Invalid Signature');
     }
   }
 
   static confirmOrder = async (bookingId: string) => {
-    return await prisma.$transaction(async (prisma) => {
-      const booking = await prisma.booking.findUnique({
+    return await prisma.$transaction(async (tx) => {
+      const booking = await tx.booking.findUnique({
         where: { id: bookingId },
         include: { tickets: true },
       });
+
       if (!booking) {
         throw new Error("Booking not found!!");
       }
-      await prisma.booking.update({
+
+      // Update payment status
+      await tx.booking.update({
         where: { id: bookingId },
         data: { paymentStatus: "PAID" },
       });
 
       const pipeline = redisClient.pipeline();
-      booking.tickets.forEach(async (ticket) => {
+
+      // Use for...of instead of forEach to handle async/await properly
+      for (const ticket of booking.tickets) {
         console.log(ticket.id);
-        await prisma.ticket.update({
+        await tx.ticket.update({
           where: { id: ticket.id },
           data: { status: "BOOKED" },
         });
         pipeline.del(`locked_ticket:${bookingId}:${ticket.id}`);
-      });
-      await pipeline.exec();
-      booking.paymentStatus = "PAID";
-      return booking;
+      }
+
+      await pipeline.exec(); // Execute Redis pipeline commands
+
+      // Reflect payment status update in the returned object
+      return { ...booking, paymentStatus: "PAID" };
     });
   };
+
   static getOrder = async (order_id: string) => {
     Cashfree.PGFetchOrder("2023-08-01", order_id)
       .then((response) => {

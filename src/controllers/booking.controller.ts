@@ -41,12 +41,17 @@ class BookingController {
 
   static updatePaymentStatus = asyncHandler(
     async (req: Request, res: Response) => {
-      console.log('Route hit');
-      await BookingService.updatePaymentStatus(req);
-      res.status(200).send('Webhook received successfully');
+      const signature = req.headers["x-webhook-signature"];
+      const timestamp = req.headers["x-webhook-timestamp"];
+      const body = (req as any).rawBody;
+      await BookingService.updatePaymentStatus({ signature, body, timestamp });
+      if (req.body.data.payment.payment_status === 'SUCCESS')
+        await BookingService.confirmOrder(req.body.data.order.order_id);
+
+      res.status(200).send('Webhook received');
     }
   )
-
+  // REMOVE IT
   static confirmBooking = asyncHandler(async (req: Request, res: Response) => {
     const { bookingId } = req.body;
     const booking = await BookingService.confirmOrder(bookingId);
