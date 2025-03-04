@@ -41,8 +41,9 @@ class BookingController {
 
   static updatePaymentStatus = asyncHandler(
     async (req: Request, res: Response) => {
+      console.log('Route hit');
       await BookingService.updatePaymentStatus(req);
-      res.status(200).json();
+      res.status(200).send('Webhook received successfully');
     }
   )
 

@@ -122,12 +122,12 @@ class BookingService {
     return orderResponse;
   }
 
-  static updatePaymentStatus = async (req) => {
+  static updatePaymentStatus = async (data: any) => {
     try {
-      console.log(req.headers);
-      Cashfree.PGVerifyWebhookSignature(req.headers["x-webhook-signature"], req.rawBody, req.headers["x-webhook-timestamp"])
-      const data = req.body;
-      console.log(data);
+      console.log(data.headers);
+      Cashfree.PGVerifyWebhookSignature(data.headers["x-webhook-signature"], data.rawBody, data.headers["x-webhook-timestamp"])
+      const dataBody = data.body;
+      console.log(dataBody);
     } catch (err) {
       console.log(err.message);
       throw new Error("Invalid Signature");
