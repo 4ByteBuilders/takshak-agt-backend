@@ -58,7 +58,7 @@ class BookingService {
         data: { paymentStatus: PaymentStatus.CANCELLED },
       });
 
-      //   REMOVE LOCKED TICKETS FROM REDIS
+
       const pipeline = redisClient.pipeline();
 
       booking.tickets.forEach((ticket) => {
@@ -184,56 +184,102 @@ class BookingService {
     const bookings = await prisma.booking.findMany({
       where: {
         userId,
+        paymentStatus: PaymentStatus.PAID
       },
       include: {
         tickets: true,
+        event: {
+          include: {
+            priceOfferings: true,
+          }
+        }
       },
       orderBy: {
         createdAt: "desc",
       },
     });
-    return bookings;
+
+    const enrichedBookings = bookings.map((booking) => {
+      const priceOfferingSelected = JSON.parse(booking.priceOfferingSelected as string);
+
+      const priceDetails = Object.entries(priceOfferingSelected).map(([id, quantity]) => {
+        const offering = booking.event.priceOfferings.find((offer) => offer.id === id);
+        return offering
+          ? { name: offering.name, price: offering.price, quantity }
+          : { name: "Unknown", price: 0, quantity };
+      });
+
+      return {
+        ...booking,
+        priceDetails,
+      };
+    });
+
+    return enrichedBookings;
   }
 
   static async getPendingBookings({ userId, eventId }) {
     const sixteenMinutesAgo = new Date();
     sixteenMinutesAgo.setMinutes(sixteenMinutesAgo.getMinutes() - 16);
-    if (eventId) {
-      return await prisma.booking.findFirst({
-        where: {
-          userId,
-          eventId,
-          paymentStatus: "PENDING",
-          createdAt: {
-            gte: sixteenMinutesAgo,
-          },
-        },
 
+    const whereCondition = {
+      userId,
+      paymentStatus: PaymentStatus.PENDING,
+      createdAt: { gte: sixteenMinutesAgo },
+      ...(eventId ? { eventId } : {}),
+    };
+
+    const bookings = eventId
+      ? await prisma.booking.findFirst({
+        where: whereCondition,
         include: {
-          event: true,
+          event: {
+            include: {
+              priceOfferings: true,
+            },
+          },
+          tickets: true,
         },
-        orderBy: {
-          createdAt: "desc",
+        orderBy: { createdAt: "desc" },
+      })
+      : await prisma.booking.findMany({
+        where: whereCondition,
+        include: {
+          event: {
+            include: {
+              priceOfferings: true,
+            },
+          },
+          tickets: true,
         },
+        orderBy: { createdAt: "desc" },
       });
-    }
-    return await prisma.booking.findMany({
-      where: {
-        userId,
-        paymentStatus: "PENDING",
-        createdAt: {
-          gte: sixteenMinutesAgo,
-        },
-      },
 
-      include: {
-        event: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+    if (!bookings) return null;
+
+
+    const pendingBookings = Array.isArray(bookings) ? bookings : [bookings];
+
+
+    const enrichedBookings = pendingBookings.map((booking) => {
+      const priceOfferingSelected = JSON.parse(booking.priceOfferingSelected as string);
+
+      const priceDetails = Object.entries(priceOfferingSelected).map(([id, quantity]) => {
+        const offering = booking.event.priceOfferings.find((offer) => offer.id === id);
+        return offering
+          ? { name: offering.name, price: offering.price, quantity: quantity as number }
+          : { name: "Unknown", price: 0, quantity: quantity as number };
+      })[0];
+
+      return {
+        ...booking,
+        priceDetails,
+      };
     });
+
+    return eventId ? enrichedBookings[0] : enrichedBookings;
   }
+
 
   static async verifyBooking({ qr }) {
     const booking = await prisma.booking.findUnique({
