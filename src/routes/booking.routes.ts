@@ -19,6 +19,6 @@ router.get("/get-bookings", authMiddleware, BookingController.getBookings);
 router.get("/get-pending-bookings", authMiddleware, BookingController.getPendingBookings);
 router.get("/payment-status", authMiddleware, BookingController.getPaymentStatus);
 router.get("/get-pending-bookings", authMiddleware, BookingController.getPendingBookings);
-
+router.get("/update-payment-status", BookingController.updatePaymentStatus);
 
 export default router;

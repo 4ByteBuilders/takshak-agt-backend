@@ -39,6 +39,14 @@ class BookingController {
     }
   );
 
+  static updatePaymentStatus = asyncHandler(
+    async (req: Request, res: Response) => {
+      const { data } = req.body;
+      console.log(data);
+      res.status(200);
+    }
+  )
+
   static confirmBooking = asyncHandler(async (req: Request, res: Response) => {
     const { bookingId } = req.body;
     const booking = await BookingService.confirmOrder(bookingId);
