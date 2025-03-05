@@ -3,10 +3,10 @@ import { CustomError } from "../utils/CustomError";
 import logger from "../utils/logger";
 
 const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
-    logger.error({
+    logger.error(JSON.stringify({
         error: err.message,
         stack: err.stack,
-    });
+    }));
 
     const statusCode = err instanceof CustomError ? err.statusCode : 500;
 

@@ -10,6 +10,9 @@ import express, { Request, Response, NextFunction } from 'express';
 dotenv.config();
 
 import { User } from "@supabase/supabase-js";
+import cron from "node-cron";
+import updateExpiredBookings from "./cronJobs/updateExpiredBookings";
+import logger from "./utils/logger";
 
 declare global {
   namespace Express {
@@ -37,6 +40,11 @@ app.use("/policy", policyRouter);
 app.use("/booking", bookingRouter);
 app.use("/admin", adminRouter);
 app.use(errorHandler);
+
+cron.schedule('*/10 * * * *', async () => {
+  logger.info((`[${new Date().toISOString()}] Running cron job to update expired bookings...`).toString());
+  await updateExpiredBookings();
+});
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
