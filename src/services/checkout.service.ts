@@ -3,6 +3,7 @@ import prisma from "../utils/prisma";
 import redisClient from "../utils/redis";
 import { v4 as uuidv4 } from "uuid";
 import BookingService from "./booking.service";
+import { CustomError } from "../utils/CustomError";
 
 class CheckoutService {
   static async getOrderReady({ eventId, user, ticketCounts, totalAmount, priceOfferings, }) {
@@ -26,7 +27,7 @@ class CheckoutService {
         });
 
         if (availableTickets.length < ticketCounts) {
-          throw new Error("Not enough available tickets");
+          throw new CustomError("Not enough available tickets", 400);
         }
 
         const ticketIds = availableTickets.map((ticket) => ticket.id);
@@ -52,28 +53,28 @@ class CheckoutService {
             `locked_ticket:${booking.id}:${ticketId}`,
             user.id,
             "EX",
-            200
+            1120
           );
         });
 
         await pipeline.exec();
 
         const response = await BookingService.createOrder({
-          order_id: booking.id,
-          order_amount: totalAmount,
+          orderId: booking.id,
+          orderAmount: totalAmount,
           user,
         });
 
         if (!response.status) {
-          throw new Error(response.message);
+          throw new CustomError(response.message, 400);
         }
         await tx.booking.update({
           where: {
             id: booking.id,
           },
           data: {
-            paymentSessionId: response.resByCashfree.payment_session_id,
-            orderExpiryTime: response.resByCashfree.order_expiry_time,
+            paymentSessionId: response.response.payment_session_id,
+            orderExpiryTime: response.response.order_expiry_time,
           },
         });
         return response;
