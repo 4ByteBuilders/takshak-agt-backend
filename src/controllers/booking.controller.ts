@@ -5,7 +5,7 @@ import CheckoutService from "../services/checkout.service";
 
 class BookingController {
   static getBookings = asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.query.userId as string;
+    const userId = req.user.id;
     const bookings = await BookingService.getBookings({
       userId,
     });
@@ -66,14 +66,12 @@ class BookingController {
 
   static verifyBooking = asyncHandler(async (req: Request, res: Response) => {
     const { qr } = req.body;
-    console.log(qr);
     const booking = await BookingService.verifyBooking({ qr });
     res.status(200).json(booking);
   });
 
   static checkIn = asyncHandler(async (req: Request, res: Response) => {
     const { booking_id, checkedInCount } = req.body;
-    console.log(booking_id, checkedInCount);
     const booking = await BookingService.checkIn({
       booking_id,
       checkedInCount,
