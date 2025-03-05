@@ -292,7 +292,7 @@
 
 import prisma from "../utils/prisma";
 import { Cashfree } from "cashfree-pg";
-import { PaymentStatus } from "@prisma/client";
+import { PaymentStatus, Status } from "@prisma/client";
 import redisClient from "../utils/redis";
 import { CustomError } from "../utils/CustomError";
 
@@ -429,6 +429,19 @@ class BookingService {
       await tx.booking.update({
         where: { id: bookingId },
         data: { paymentStatus: PaymentStatus.PAID },
+      });
+
+      const ticketIds = booking.tickets.map((ticket) => ticket.id);
+
+      await tx.ticket.updateMany({
+        where : {
+          id : {
+            in : ticketIds
+          }
+        },
+        data : {
+          status : Status.BOOKED
+        }
       });
 
       return { ...booking, paymentStatus: "PAID" };
