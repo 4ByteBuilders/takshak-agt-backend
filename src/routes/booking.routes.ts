@@ -4,7 +4,6 @@ import { authMiddleware } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-router.get("/remaining-tickets", BookingController.getRemainingTickets);
 
 router.post("/create-order", authMiddleware, BookingController.createOrder);
 router.post("/cancel-booking", BookingController.cancelBooking);
@@ -13,6 +12,7 @@ router.post("/verify-booking", BookingController.verifyBooking);
 router.post("/check-in", BookingController.checkIn);
 
 
+router.get("/remaining-tickets", authMiddleware, BookingController.getRemainingTickets);
 router.get("/get-bookings", authMiddleware, BookingController.getBookings);
 router.get("/get-pending-bookings", authMiddleware, BookingController.getPendingBookings);
 router.get("/payment-status", authMiddleware, BookingController.getPaymentStatus);

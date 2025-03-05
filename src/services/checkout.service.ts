@@ -1,37 +1,64 @@
-import { Status } from "@prisma/client";
+import { Status, PaymentStatus, PrismaClient } from "@prisma/client";
 import prisma from "../utils/prisma";
-import redisClient from "../utils/redis";
 import { v4 as uuidv4 } from "uuid";
 import BookingService from "./booking.service";
 import { CustomError } from "../utils/CustomError";
 
+const RESERVATION_TIMEOUT_MS = 16 * 60 * 1000;
+
+interface OrderRequest {
+  eventId: string;
+  user: { id: string };
+  ticketCounts: number;
+  totalAmount: number;
+  priceOfferings: any;
+}
+
 class CheckoutService {
-  static async getOrderReady({ eventId, user, ticketCounts, totalAmount, priceOfferings, }) {
+  static async getOrderReady({
+    eventId,
+    user,
+    ticketCounts,
+    totalAmount,
+    priceOfferings,
+  }: OrderRequest) {
     return await prisma.$transaction(
       async (tx) => {
-
-        const lockedTickets = await redisClient.keys(`locked_ticket:*`);
-        const lockedTicketIds = lockedTickets.map((key) =>
-          key.split(":").pop()
-        );
-
-        const availableTickets = await tx.ticket.findMany({
+        // Step 1: Remove expired reservations
+        await tx.ticket.updateMany({
           where: {
             eventId,
-            status: Status.AVAILABLE,
-            id: {
-              notIn: lockedTicketIds,
-            },
+            status: Status.RESERVED,
+            reservationExpiresAt: { lt: new Date() },
           },
-          take: ticketCounts,
+          data: { status: Status.AVAILABLE, reservationExpiresAt: null },
         });
+
+        // Step 2: Select available tickets with row-level locking
+        const availableTickets = await tx.$queryRaw<{ id: string }[]>`
+          SELECT id 
+          FROM "Ticket"
+          WHERE "eventId" = ${eventId} AND "status" = 'AVAILABLE'
+          FOR UPDATE SKIP LOCKED
+          LIMIT ${ticketCounts};
+        `;
 
         if (availableTickets.length < ticketCounts) {
           throw new CustomError("Not enough available tickets", 400);
         }
 
         const ticketIds = availableTickets.map((ticket) => ticket.id);
-        const pipeline = redisClient.pipeline();
+
+        // Step 3: Reserve the tickets
+        await tx.ticket.updateMany({
+          where: { id: { in: ticketIds } },
+          data: {
+            status: Status.RESERVED,
+            reservationExpiresAt: new Date(Date.now() + RESERVATION_TIMEOUT_MS),
+          },
+        });
+
+        // Step 4: Create a booking with a PENDING payment
         const booking = await tx.booking.create({
           data: {
             userId: user.id,
@@ -41,24 +68,13 @@ class CheckoutService {
             amountPaid: totalAmount,
             eventId,
             priceOfferingSelected: JSON.stringify(priceOfferings),
-            paymentStatus: "PENDING",
+            paymentStatus: PaymentStatus.PENDING,
             numVerifiedAtVenue: 0,
             qrCode: uuidv4().slice(0, 10),
           },
         });
 
-
-        ticketIds.forEach((ticketId) => {
-          pipeline.set(
-            `locked_ticket:${booking.id}:${ticketId}`,
-            user.id,
-            "EX",
-            1120
-          );
-        });
-
-        await pipeline.exec();
-
+        // Step 5: Initiate payment processing
         const response = await BookingService.createOrder({
           orderId: booking.id,
           orderAmount: totalAmount,
@@ -68,15 +84,16 @@ class CheckoutService {
         if (!response.status) {
           throw new CustomError(response.message, 400);
         }
+
+        // Step 6: Store payment session details in the booking
         await tx.booking.update({
-          where: {
-            id: booking.id,
-          },
+          where: { id: booking.id },
           data: {
             paymentSessionId: response.response.payment_session_id,
             orderExpiryTime: response.response.order_expiry_time,
           },
         });
+
         return response;
       },
       { timeout: 15000 }

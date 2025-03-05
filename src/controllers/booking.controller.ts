@@ -15,7 +15,8 @@ class BookingController {
   });
   static getRemainingTickets = asyncHandler(
     async (req: Request, res: Response) => {
-      const remTkts = await BookingService.fetchRemainingTickets();
+      const eventId = req.query.eventId as string;
+      const remTkts = await BookingService.fetchRemainingTickets(eventId);
       res.status(200).json(remTkts);
     }
   );
@@ -77,16 +78,11 @@ class BookingController {
   static createOrder = asyncHandler(async (req: Request, res: Response) => {
     const { eventId, priceOfferings } = req.body;
     const user = req.user;
-    logger.info({
-      user: "Creating order for user" + user.id,
-      priceOfferings: priceOfferings,
-    });
+    logger.info("Creating order for user" + user.id);
     const orderDetails = await BookingService.fetchAmountAndTicketCount(
       priceOfferings
     );
-    logger.info({
-      orderDetails: orderDetails,
-    })
+
     const response = await CheckoutService.getOrderReady({
       eventId,
       user,

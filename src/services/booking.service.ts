@@ -1,299 +1,6 @@
-// import prisma from "../utils/prisma";
-// import { Cashfree } from "cashfree-pg";
-// import { PaymentStatus } from "@prisma/client";
-// import redisClient from "../utils/redis";
-// import { CustomError } from "../utils/CustomError";
-
-// Cashfree.XClientId = process.env.CASHFREE_CLIENT_ID!;
-// Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY!;
-// Cashfree.XEnvironment = Cashfree.Environment.SANDBOX;
-
-// class BookingService {
-//   static getRemainingTickets = async () => {
-//     try {
-//       const lockedTickets = await redisClient.keys(`locked_ticket:*`);
-//       const lockedTicketIds = lockedTickets.map((key) =>
-//         key.split(":").pop()
-//       );
-
-//       // ONLY WORKS FOR SINGLE EVENT
-//       const event = await prisma.event.findFirst({
-//         include: {
-//           tickets: {
-//             where: {
-//               status: "AVAILABLE",
-//               id: {
-//                 notIn: lockedTicketIds,
-//               }
-//             }
-//           }
-//         },
-//       });
-//       if (!event) return new CustomError("Event not found", 404);
-//       return { remainingTickets: event.tickets.length };
-//     } catch (e) {
-//       throw new CustomError("Error in getting remaining tickets", 400);
-//     }
-//   };
-
-//   static getAmountAndTicketsCount = async (priceOfferingSelected: Object) => {
-//     try {
-//       let amount = 0;
-//       let ticketsCount = 0;
-//       const priceOfferings = await prisma.priceOffering.findMany({
-//         where: {
-//           id: {
-//             in: Object.keys(priceOfferingSelected),
-//           },
-//         },
-//       });
-//       priceOfferings.forEach((priceOffering) => {
-//         amount += priceOffering.price * priceOfferingSelected[priceOffering.id];
-//         ticketsCount +=
-//           priceOffering.capacity * priceOfferingSelected[priceOffering.id];
-//       });
-//       return { amount, ticketsCount };
-//     } catch (e) {
-//       throw new CustomError("Error in getting amount and tickets count", 400);
-//     }
-//   };
-
-//   static cancelBooking = async (bookingId: string) => {
-//     return await prisma.$transaction(async (prisma) => {
-//       const booking = await prisma.booking.findUnique({
-//         where: { id: bookingId },
-//         include: { tickets: true },
-//       });
-
-//       if (!booking) {
-//         throw new Error("Booking not found!!");
-//       }
-
-//       await prisma.booking.update({
-//         where: { id: bookingId },
-//         data: { paymentStatus: PaymentStatus.CANCELLED },
-//       });
-
-
-//       const pipeline = redisClient.pipeline();
-
-//       booking.tickets.forEach((ticket) => {
-//         pipeline.del(`locked_ticket:${bookingId}:${ticket.id}`);
-//       });
-
-//       await pipeline.exec();
-
-//       booking.paymentStatus = PaymentStatus.CANCELLED;
-//       return booking;
-//     });
-//   };
-
-//   static createOrder = async ({ order_id, order_amount, user }) => {
-//     const expiryDate = new Date();
-//     expiryDate.setMinutes(expiryDate.getMinutes() + 16);
-//     const orderExpiryTime = expiryDate.toISOString();
-
-//     var request = {
-//       order_amount: order_amount,
-//       order_currency: "INR",
-//       order_id: order_id,
-//       customer_details: {
-//         customer_id: user.id,
-//         customer_phone: "9999999999",
-//         customer_email: user.email,
-//         customer_name: user.name,
-//       },
-//       order_expiry_time: orderExpiryTime,
-//       order_meta: {
-//         return_url: `${process.env.FRONTEND_URL}/payment-status?order_id=${order_id}&status={order_status}`,
-//       },
-//     };
-
-//     return Cashfree.PGCreateOrder("2023-08-01", request)
-//       .then((response) => {
-//         return {
-//           status: true,
-//           message: "Order created successfully:",
-//           resByCashfree: response.data,
-//         };
-//       })
-//       .catch((error) => {
-//         return {
-//           status: false,
-//           message: "Error:" + (error.response.data.message as string),
-//           resByCashfree: error.response.data,
-//         };
-//       });
-//   };
-
-//   static getPaymentStatus = async (order_id: string) => {
-//     const orderResponse = await Cashfree.PGOrderFetchPayments("2023-08-01", order_id).then((response) => {
-//       return response.data;
-//     }).catch((error) => {
-//       console.log(error);
-//       return { status: false, error: 'Error fetching payment status' };
-//     });
-
-//     console.log(orderResponse);
-//     return orderResponse;
-//   }
-
-//   static updatePaymentStatus = async ({ signature, body, timestamp }) => {
-//     try {
-//       Cashfree.PGVerifyWebhookSignature(signature, body, timestamp);
-//     } catch (err) {
-//       console.log(err.message)
-//       throw new Error('Invalid Signature');
-//     }
-//   }
-
-//   static confirmOrder = async (bookingId: string) => {
-//     return await prisma.$transaction(async (tx) => {
-//       const booking = await tx.booking.findUnique({
-//         where: { id: bookingId },
-//         include: { tickets: true },
-//       });
-
-//       if (!booking) {
-//         throw new Error("Booking not found!!");
-//       }
-
-//       await tx.booking.update({
-//         where: { id: bookingId },
-//         data: { paymentStatus: "PAID" },
-//       });
-
-//       return { ...booking, paymentStatus: "PAID" };
-//     });
-//   };
-
-//   static getOrder = async (order_id: string) => {
-//     Cashfree.PGFetchOrder("2023-08-01", order_id)
-//       .then((response) => {
-//         return {
-//           status: true,
-//           message: "Order fetched successfully:",
-//           resByCashfree: response.data,
-//         };
-//       })
-//       .catch((error) => {
-//         return {
-//           status: false,
-//           message: "Error:" + error.response.data.message,
-//         };
-//       });
-//   };
-
-//   static async getBookings({ userId }) {
-//     const bookings = await prisma.booking.findMany({
-//       where: {
-//         userId,
-//         paymentStatus: PaymentStatus.PAID
-//       },
-//       include: {
-//         tickets: true,
-//         event: {
-//           include: {
-//             priceOfferings: true,
-//           }
-//         }
-//       },
-//       orderBy: {
-//         createdAt: "desc",
-//       },
-//     });
-
-//     const enrichedBookings = bookings.map((booking) => {
-//       const priceOfferingSelected = JSON.parse(booking.priceOfferingSelected as string);
-
-//       const priceDetails = Object.entries(priceOfferingSelected).map(([id, quantity]) => {
-//         const offering = booking.event.priceOfferings.find((offer) => offer.id === id);
-//         return offering
-//           ? { name: offering.name, price: offering.price, quantity }
-//           : { name: "Unknown", price: 0, quantity };
-//       });
-
-//       return {
-//         ...booking,
-//         priceDetails,
-//       };
-//     });
-
-//     return enrichedBookings;
-//   }
-
-//   static async getPendingBookings({ userId, eventId }) {
-//     const sixteenMinutesAgo = new Date();
-//     sixteenMinutesAgo.setMinutes(sixteenMinutesAgo.getMinutes() - 16);
-
-//     const whereCondition = {
-//       userId,
-//       paymentStatus: PaymentStatus.PENDING,
-//       createdAt: { gte: sixteenMinutesAgo },
-//       ...(eventId ? { eventId } : {}),
-//     };
-
-//     const bookings = eventId
-//       ? await prisma.booking.findFirst({
-//         where: whereCondition,
-//         include: {
-//           event: {
-//             include: {
-//               priceOfferings: true,
-//             },
-//           },
-//           tickets: true,
-//         },
-//         orderBy: { createdAt: "desc" },
-//       })
-//       : await prisma.booking.findMany({
-//         where: whereCondition,
-//         include: {
-//           event: {
-//             include: {
-//               priceOfferings: true,
-//             },
-//           },
-//           tickets: true,
-//         },
-//         orderBy: { createdAt: "desc" },
-//       });
-
-//     if (!bookings) return null;
-
-
-//     const pendingBookings = Array.isArray(bookings) ? bookings : [bookings];
-
-
-//     const enrichedBookings = pendingBookings.map((booking) => {
-//       const priceOfferingSelected = JSON.parse(booking.priceOfferingSelected as string);
-
-//       const priceDetails = Object.entries(priceOfferingSelected).map(([id, quantity]) => {
-//         const offering = booking.event.priceOfferings.find((offer) => offer.id === id);
-//         return offering
-//           ? { name: offering.name, price: offering.price, quantity: quantity as number }
-//           : { name: "Unknown", price: 0, quantity: quantity as number };
-//       });
-
-//       return {
-//         ...booking,
-//         priceDetails,
-//       };
-//     });
-
-//     return eventId ? enrichedBookings[0] : enrichedBookings;
-//   }
-
-
-//   
-// }
-
-// export default BookingService;
-
 import prisma from "../utils/prisma";
 import { Cashfree } from "cashfree-pg";
 import { PaymentStatus, Status } from "@prisma/client";
-import redisClient from "../utils/redis";
 import { CustomError } from "../utils/CustomError";
 
 Cashfree.XClientId = process.env.CASHFREE_CLIENT_ID!;
@@ -301,29 +8,32 @@ Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY!;
 Cashfree.XEnvironment = Cashfree.Environment.SANDBOX;
 
 class BookingService {
-  static async fetchRemainingTickets() {
+  static async fetchRemainingTickets(eventId: string) {
     try {
-      const lockedTickets = await redisClient.keys(`locked_ticket:*`);
-      const lockedTicketIds = lockedTickets.map((key) => key.split(":").pop());
+      // Step 1: Remove expired reservations
+      await prisma.ticket.updateMany({
+        where: {
+          eventId,
+          status: "RESERVED",
+          reservationExpiresAt: { lt: new Date() }, // Expired reservations
+        },
+        data: { status: "AVAILABLE", reservationExpiresAt: null },
+      });
 
-      const event = await prisma.event.findFirst({
-        include: {
-          tickets: {
-            where: {
-              status: "AVAILABLE",
-              id: { notIn: lockedTicketIds },
-            },
-          },
+      // Step 2: Count remaining available tickets
+      const remainingTickets = await prisma.ticket.count({
+        where: {
+          eventId,
+          status: "AVAILABLE",
         },
       });
 
-      if (!event) throw new CustomError("Event not found", 404);
-
-      return { remainingTickets: event.tickets.length };
+      return { remainingTickets };
     } catch (error) {
       throw new CustomError("Error fetching remaining tickets", 400);
     }
   }
+
 
   static async fetchAmountAndTicketCount(priceOfferingSelected: Record<string, number>) {
     try {
@@ -347,26 +57,31 @@ class BookingService {
   }
 
   static async cancelBooking(bookingId: string) {
-    return await prisma.$transaction(async (prisma) => {
-      const booking = await prisma.booking.findUnique({
+    return await prisma.$transaction(async (tx) => {
+      // Step 1: Fetch the booking along with its tickets
+      const booking = await tx.booking.findUnique({
         where: { id: bookingId },
         include: { tickets: true },
       });
 
       if (!booking) throw new CustomError("Booking not found", 404);
 
-      await prisma.booking.update({
+      // Step 2: Mark the booking as CANCELLED
+      await tx.booking.update({
         where: { id: bookingId },
         data: { paymentStatus: PaymentStatus.CANCELLED },
       });
 
-      const pipeline = redisClient.pipeline();
-      booking.tickets.forEach((ticket) => pipeline.del(`locked_ticket:${bookingId}:${ticket.id}`));
-      await pipeline.exec();
+      // Step 3: Release the tickets associated with this booking
+      await tx.ticket.updateMany({
+        where: { id: { in: booking.tickets.map((ticket) => ticket.id) } },
+        data: { status: Status.AVAILABLE, reservationExpiresAt: null },
+      });
 
       return { ...booking, paymentStatus: PaymentStatus.CANCELLED };
     });
   }
+
 
   static async createOrder({ orderId, orderAmount, user }) {
     const expiryDate = new Date();
@@ -396,6 +111,7 @@ class BookingService {
         response: response.data,
       };
     } catch (error) {
+      console.log(error.response?.data);
       throw new CustomError(error.response?.data?.message || "Error creating order", 500);
     }
   }
@@ -419,6 +135,7 @@ class BookingService {
 
   static async confirmBooking(bookingId: string) {
     return await prisma.$transaction(async (tx) => {
+      // Step 1: Fetch the booking along with its tickets
       const booking = await tx.booking.findUnique({
         where: { id: bookingId },
         include: { tickets: true },
@@ -426,27 +143,32 @@ class BookingService {
 
       if (!booking) throw new CustomError("Booking not found", 404);
 
+      // Step 2: Ensure the booking isn't already paid or expired
+      if (booking.paymentStatus === PaymentStatus.PAID) {
+        throw new CustomError("Booking is already confirmed", 400);
+      }
+
+      if (booking.orderExpiryTime && booking.orderExpiryTime < new Date()) {
+        throw new CustomError("Booking has expired", 400);
+      }
+
+      // Step 3: Confirm the booking (mark as PAID)
       await tx.booking.update({
         where: { id: bookingId },
         data: { paymentStatus: PaymentStatus.PAID },
       });
 
+      // Step 4: Mark tickets as BOOKED
       const ticketIds = booking.tickets.map((ticket) => ticket.id);
-
       await tx.ticket.updateMany({
-        where : {
-          id : {
-            in : ticketIds
-          }
-        },
-        data : {
-          status : Status.BOOKED
-        }
+        where: { id: { in: ticketIds } },
+        data: { status: Status.BOOKED, reservationExpiresAt: null },
       });
 
-      return { ...booking, paymentStatus: "PAID" };
+      return { ...booking, paymentStatus: PaymentStatus.PAID };
     });
   }
+
 
   static async fetchOrder(orderId: string) {
     try {
@@ -468,18 +190,31 @@ class BookingService {
       orderBy: { createdAt: "desc" },
     });
 
-    return bookings.map((booking) => ({
-      ...booking,
-      priceDetails: Object.entries(JSON.parse(booking.priceOfferingSelected as string)).map(
-        ([id, quantity]) => {
-          const offering = booking.event.priceOfferings.find((offer) => offer.id === id);
-          return offering ? { name: offering.name, price: offering.price, quantity } : null;
+    return bookings.map((booking) => {
+      let priceDetails = [];
+
+      // Safely parse priceOfferingSelected if it's a string
+      if (typeof booking.priceOfferingSelected === "string") {
+        try {
+          const parsedOfferings = JSON.parse(booking.priceOfferingSelected);
+          priceDetails = Object.entries(parsedOfferings).map(([id, quantity]) => {
+            const offering = booking.event.priceOfferings.find((offer) => offer.id === id);
+            return offering ? { name: offering.name, price: offering.price, quantity } : null;
+          }).filter(Boolean); // Remove any null values
+        } catch (error) {
+          console.error("Failed to parse priceOfferingSelected:", error);
         }
-      ),
-    }));
+      }
+
+      return {
+        ...booking,
+        priceDetails,
+      };
+    });
   }
 
-  static async fetchPendingBookings({ userId, eventId }) {
+
+  static async fetchPendingBookings({ userId, eventId }: { userId: string; eventId?: string }) {
     const sixteenMinutesAgo = new Date();
     sixteenMinutesAgo.setMinutes(sixteenMinutesAgo.getMinutes() - 16);
 
@@ -487,60 +222,69 @@ class BookingService {
       userId,
       paymentStatus: PaymentStatus.PENDING,
       createdAt: { gte: sixteenMinutesAgo },
-      ...(eventId ? { eventId } : {}),
+      ...(eventId ? { eventId } : {}), // Include eventId in the query if provided
     };
 
-    const bookings = eventId
-      ? await prisma.booking.findFirst({
-        where: whereCondition,
-        include: {
-          event: {
-            include: {
-              priceOfferings: true,
-            },
-          },
-          tickets: true,
-        },
-        orderBy: { createdAt: "desc" },
-      })
-      : await prisma.booking.findMany({
-        where: whereCondition,
-        include: {
-          event: {
-            include: {
-              priceOfferings: true,
-            },
-          },
-          tickets: true,
-        },
-        orderBy: { createdAt: "desc" },
-      });
+    const bookings = await prisma.booking.findMany({
+      where: whereCondition,
+      include: {
+        event: { include: { priceOfferings: true } },
+        tickets: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
 
-    if (!bookings) return null;
+    // If no bookings are found, return null (if eventId is provided) or an empty array
+    if (!bookings.length) {
+      return eventId ? null : [];
+    }
 
+    // Transform the bookings
+    const transformedBookings = bookings.map((booking) => {
+      let priceOfferingSelected = {};
 
-    const pendingBookings = Array.isArray(bookings) ? bookings : [bookings];
+      // Safely parse priceOfferingSelected if it's a string
+      if (typeof booking.priceOfferingSelected === "string") {
+        try {
+          priceOfferingSelected = JSON.parse(booking.priceOfferingSelected);
+        } catch (error) {
+          console.error("Failed to parse priceOfferingSelected:", error);
+        }
+      } else {
+        priceOfferingSelected = booking.priceOfferingSelected;
+      }
 
-    const enrichedBookings = pendingBookings.map((booking) => {
-      const priceOfferingSelected = JSON.parse(booking.priceOfferingSelected as string);
-
+      // Map price details
       const priceDetails = Object.entries(priceOfferingSelected).map(([id, quantity]) => {
         const offering = booking.event.priceOfferings.find((offer) => offer.id === id);
         return offering
           ? { eventId: 'NA', id: 'NA', name: offering.name, price: offering.price, capacity: quantity as number }
           : { eventId: 'NA', id: 'NA', name: "Unknown", price: 0, capacity: quantity as number };
       });
-      booking.event.priceOfferings = priceDetails;
-      return booking;
+
+      return {
+        ...booking,
+        event: {
+          ...booking.event,
+          priceOfferings: priceDetails,
+        },
+      };
     });
 
-    return eventId ? enrichedBookings[0] : enrichedBookings;
+    // If eventId is provided, return the first matching booking (if any)
+    if (eventId) {
+      return transformedBookings[0] || null;
+    }
+
+    // Otherwise, return all transformed bookings
+    return transformedBookings;
   }
-  static async verifyBooking({ qr }) {
-    const booking = await prisma.booking.findUnique({
+
+  static async verifyBooking({ qr }: { qr: string }) {
+    const booking = await prisma.booking.findFirst({
       where: {
         qrCode: qr,
-        paymentStatus: "PAID",
+        paymentStatus: PaymentStatus.PAID,
       },
       include: {
         tickets: true,
@@ -548,49 +292,38 @@ class BookingService {
     });
 
     if (!booking) {
-      throw new Error("Booking not found");
+      throw new CustomError("Booking not found", 404);
     }
 
     return booking;
   }
 
-  static async checkIn({ booking_id, checkedInCount }) {
+
+  static async checkIn({ booking_id, checkedInCount }: { booking_id: string, checkedInCount: number }) {
     const booking = await prisma.booking.findUnique({
-      where: {
-        id: booking_id,
-      },
-      include: {
-        tickets: true,
-      },
+      where: { id: booking_id },
+      include: { tickets: true },
     });
 
     if (!booking) {
-      throw new Error("Booking not found");
+      throw new CustomError("Booking not found", 404);
     }
-    console.log(checkedInCount);
-    console.log(booking.numVerifiedAtVenue);
-    console.log(booking.tickets.length);
+
     const checkedInCountNumber = Number(checkedInCount);
-    if (
-      checkedInCountNumber + booking.numVerifiedAtVenue >
-      booking.tickets.length
-    ) {
-      throw new Error("Invalid check-in count");
+    const currentCheckIns = booking.numVerifiedAtVenue || 0;
+
+    if (checkedInCountNumber + currentCheckIns > booking.tickets.length) {
+      throw new CustomError("Invalid check-in count", 400);
     }
 
     await prisma.booking.update({
-      where: {
-        id: booking_id,
-      },
-      data: {
-        numVerifiedAtVenue: {
-          increment: checkedInCountNumber,
-        },
-      },
+      where: { id: booking_id },
+      data: { numVerifiedAtVenue: { increment: checkedInCountNumber } },
     });
-    booking.numVerifiedAtVenue += checkedInCountNumber;
-    return booking;
+
+    return { ...booking, numVerifiedAtVenue: currentCheckIns + checkedInCountNumber };
   }
+
 }
 
 export default BookingService;

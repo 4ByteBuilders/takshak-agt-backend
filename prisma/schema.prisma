@@ -32,12 +32,13 @@ model PriceOffering {
 }
 
 model Ticket {
-  id        String   @id @default(uuid())
-  eventId   String
-  bookingId String?
-  status    Status
-  event     Event    @relation(fields: [eventId], references: [id])
-  booking   Booking? @relation(fields: [bookingId], references: [id])
+  id                   String    @id @default(uuid())
+  eventId              String
+  bookingId            String?
+  status               Status
+  event                Event     @relation(fields: [eventId], references: [id])
+  booking              Booking?  @relation(fields: [bookingId], references: [id])
+  reservationExpiresAt DateTime?
 }
 
 model Booking {
@@ -67,6 +68,7 @@ model Message {
 
 enum Status {
   AVAILABLE
+  RESERVED
   BOOKED
 }
 
