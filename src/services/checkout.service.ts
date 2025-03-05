@@ -8,11 +8,12 @@ class CheckoutService {
   static async getOrderReady({ eventId, user, ticketCounts, totalAmount, priceOfferings, }) {
     return await prisma.$transaction(
       async (tx) => {
-        const lockedTickets = await redisClient.keys(`locked_ticket:*`);
 
+        const lockedTickets = await redisClient.keys(`locked_ticket:*`);
         const lockedTicketIds = lockedTickets.map((key) =>
           key.split(":").pop()
         );
+
         const availableTickets = await tx.ticket.findMany({
           where: {
             eventId,
@@ -45,16 +46,16 @@ class CheckoutService {
           },
         });
 
-        console.log(booking.id);
 
         ticketIds.forEach((ticketId) => {
           pipeline.set(
             `locked_ticket:${booking.id}:${ticketId}`,
             user.id,
             "EX",
-            1120
+            200
           );
         });
+
         await pipeline.exec();
 
         const response = await BookingService.createOrder({

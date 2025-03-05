@@ -37,7 +37,6 @@ const authMiddlewareAdmin = async (req: Request, res: Response, next: NextFuncti
   const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
-    console.log("No token");
     res.status(401).json({ error: "Unauthorized - No token provided" });
     return;
   }

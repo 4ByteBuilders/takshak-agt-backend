@@ -34,7 +34,7 @@ redisSubsriber.on("message", async (channel, message) => {
       });
 
     } catch (err) {
-      console.error("Failed to update status for", bookingId);
+      console.error("Failed to update status for", bookingId, err);
     }
   }
 });

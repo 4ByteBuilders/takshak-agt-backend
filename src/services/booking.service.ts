@@ -11,13 +11,26 @@ Cashfree.XEnvironment = Cashfree.Environment.SANDBOX;
 
 class BookingService {
   static getRemainingTickets = async () => {
+    const lockedTickets = await redisClient.keys(`locked_ticket:*`);
+    const lockedTicketIds = lockedTickets.map((key) =>
+      key.split(":").pop()
+    );
+
+    // ONLY WORKS FOR SINGLE EVENT
     const event = await prisma.event.findFirst({
-      include: { tickets: { where: { status: "AVAILABLE" } } },
+      include: {
+        tickets: {
+          where: {
+            status: "AVAILABLE",
+            id: {
+              notIn: lockedTicketIds,
+            }
+          }
+        }
+      },
     });
     if (!event) return new Error("No Event found!!");
-    const lockedTickets = await redisClient.dbsize();
-    const res = event.tickets.length - lockedTickets;
-    return { remainingTickets: res };
+    return { remainingTickets: event.tickets.length };
   };
 
   static getAmountAndTicketsCount = async (priceOfferingSelected: Object) => {
@@ -42,8 +55,6 @@ class BookingService {
 
   static cancelBooking = async (bookingId: string) => {
     return await prisma.$transaction(async (prisma) => {
-      console.log("TESTING...");
-      console.log(bookingId);
       const booking = await prisma.booking.findUnique({
         where: { id: bookingId },
         include: { tickets: true },
@@ -146,18 +157,6 @@ class BookingService {
         where: { id: bookingId },
         data: { paymentStatus: "PAID" },
       });
-
-      const pipeline = redisClient.pipeline();
-      for (const ticket of booking.tickets) {
-        console.log(ticket.id);
-        await tx.ticket.update({
-          where: { id: ticket.id },
-          data: { status: "BOOKED" },
-        });
-        pipeline.del(`locked_ticket:${bookingId}:${ticket.id}`);
-      }
-
-      await pipeline.exec();
 
       return { ...booking, paymentStatus: "PAID" };
     });
