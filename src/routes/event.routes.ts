@@ -8,4 +8,6 @@ router.post("/create", EventController.create);
 
 router.get("/get-latest", EventController.getLatestEvent);
 
+router.get("/get-available-tickets", EventController.getAvailableTickets);
+
 export default router;

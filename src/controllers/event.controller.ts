@@ -4,6 +4,12 @@ import EventService from "../services/event.service";
 
 class EventController {
 
+  static getAvailableTickets = asyncHandler(async (req : Request, res : Response) => {
+    const eventId = req.query.eventId as string;
+    const availableTicketCount = await EventService.fetchAvailableTickets({eventId});
+    res.status(200).json({availableTicketCount});
+  })
+
   static create = asyncHandler(async (req: Request, res: Response) => {
     const {
       title,
