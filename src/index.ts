@@ -48,5 +48,5 @@ cron.schedule('*/10 * * * *', async () => {
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
-  console.log(`Live on http://localhost:${PORT}`);
+
 });

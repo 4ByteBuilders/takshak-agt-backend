@@ -24,7 +24,7 @@ class BookingController {
   static getAllUserBookings = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user.id;
     const bookings = await BookingService.fetchAllUserBookings(userId);
-    
+
     res.status(200).json(bookings);
   });
 
@@ -43,21 +43,50 @@ class BookingController {
   static getPaymentStatus = asyncHandler(
     async (req: Request, res: Response) => {
       const orderId = req.query.order_id as string;
+
       const paymentStatus = await BookingService.fetchPaymentStatus(orderId);
+      if (!paymentStatus) {
+        res.status(404).json({ message: "Payment status not found" });
+        return;
+      }
+      const status = (paymentStatus as any).payment_status;
+
+
+      if (status === 'SUCCESS') {
+        await BookingService.updatePaymentStatus({ orderId, paymentStatus: status });
+      }
       res.status(200).json(paymentStatus);
     }
   );
 
   static updatePaymentStatus = asyncHandler(
     async (req: Request, res: Response) => {
-      const signature = req.headers["x-webhook-signature"];
-      const timestamp = req.headers["x-webhook-timestamp"];
-      const body = (req as any).rawBody;
-      await BookingService.verifyPaymentSignature({ signature, body, timestamp });
-      if (req.body.data.payment.payment_status === 'SUCCESS')
-        await BookingService.confirmBooking(req.body.data.order.order_id);
+      logger.info("Webhook received from Cashfree");
+      try {
+        const signature = req.headers["x-webhook-signature"];
+        const timestamp = req.headers["x-webhook-timestamp"];
+        const body = (req as any).rawBody;
 
-      res.status(200).send('Webhook received');
+        await BookingService.verifyPaymentSignature({ signature, body, timestamp });
+
+        const paymentData = req.body?.data?.payment;
+        const orderData = req.body?.data?.order;
+
+        if (!paymentData || !orderData) {
+          res.status(200).send('Webhook received: No relevant data');
+          return;
+        }
+        logger.info(`Processing webhook for order ${orderData.order_id}`);
+        if (paymentData.payment_status === 'SUCCESS') {
+          await BookingService.confirmBooking(orderData.order_id);
+          logger.info(`Booking confirmed for order ${orderData.order_id}`);
+        }
+
+        res.status(200).send('Webhook processed successfully');
+      } catch (error) {
+        logger.error("Error processing webhook:" + error.toString());
+        res.status(200).send('Webhook received');
+      }
     }
   )
 

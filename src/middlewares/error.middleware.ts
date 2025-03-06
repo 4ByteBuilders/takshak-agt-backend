@@ -7,7 +7,6 @@ const errorHandler = (err: Error, req: Request, res: Response, next: NextFunctio
         error: err.message,
         stack: err.stack,
     }));
-
     const statusCode = err instanceof CustomError ? err.statusCode : 500;
 
     res.status(statusCode).json({

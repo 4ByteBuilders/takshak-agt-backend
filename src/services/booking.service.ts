@@ -54,7 +54,7 @@ class BookingService {
             return offering ? { name: offering.name, price: offering.price, quantity } : null;
           }).filter(Boolean); // Remove any null values
         } catch (error) {
-          console.error("Failed to parse priceOfferingSelected:", error);
+          logger.error("Failed to parse priceOfferingSelected:" + error.toString());
         }
       }
 
@@ -142,15 +142,30 @@ class BookingService {
         response: response.data,
       };
     } catch (error) {
-      console.log(error.response?.data);
+      logger.info(JSON.stringify(error.response?.data));
       throw new CustomError(error.response?.data?.message || "Error creating order", 500);
     }
+  }
+
+  static async updatePaymentStatus({ orderId, paymentStatus }) {
+
+    if (paymentStatus === 'SUCCESS') {
+      paymentStatus = PaymentStatus.PAID;
+    } else if (paymentStatus === 'FAILED') {
+      paymentStatus = PaymentStatus.FAILED;
+    }
+    await prisma.booking.update({
+      where: {
+        id: orderId
+      },
+      data: { paymentStatus },
+    });
   }
 
   static async fetchPaymentStatus(orderId: string) {
     try {
       const response = await Cashfree.PGOrderFetchPayments("2023-08-01", orderId);
-      return response.data;
+      return response.data[0];
     } catch (error) {
       throw new CustomError("Error fetching payment status", 500);
     }
@@ -237,7 +252,7 @@ class BookingService {
             return offering ? { name: offering.name, price: offering.price, quantity } : null;
           }).filter(Boolean); // Remove any null values
         } catch (error) {
-          console.error("Failed to parse priceOfferingSelected:", error);
+          logger.error("Failed to parse priceOfferingSelected:" + error.toString());
         }
       }
 
@@ -283,7 +298,7 @@ class BookingService {
         try {
           priceOfferingSelected = JSON.parse(booking.priceOfferingSelected);
         } catch (error) {
-          console.error("Failed to parse priceOfferingSelected:", error);
+          logger.error("Failed to parse priceOfferingSelected:" + error.toString());
         }
       } else {
         priceOfferingSelected = booking.priceOfferingSelected;
