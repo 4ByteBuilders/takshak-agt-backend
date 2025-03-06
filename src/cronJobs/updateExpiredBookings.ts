@@ -4,7 +4,6 @@ import logger from "../utils/logger";
 import BookingService from "../services/booking.service";
 
 const updateExpiredBookings = async () => {
-    console.log("Running cron job to update expired bookings...");
     const currTime = new Date(Date.now());
 
     const pendingExpiredBookings = await prisma.booking.findMany({
