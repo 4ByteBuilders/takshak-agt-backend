@@ -2,6 +2,7 @@ import prisma from "../utils/prisma";
 import { Cashfree } from "cashfree-pg";
 import { PaymentStatus, Status } from "@prisma/client";
 import { CustomError } from "../utils/CustomError";
+import logger from "../utils/logger";
 
 Cashfree.XClientId = process.env.CASHFREE_CLIENT_ID!;
 Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY!;
@@ -173,6 +174,8 @@ class BookingService {
 
       if (!booking) throw new CustomError("Booking not found", 404);
 
+      logger.info("Booking found: ", booking);
+
       // Step 2: Ensure the booking isn't already paid or expired
       if (booking.paymentStatus === PaymentStatus.PAID) {
         throw new CustomError("Booking is already confirmed", 400);
@@ -187,6 +190,8 @@ class BookingService {
         where: { id: bookingId },
         data: { paymentStatus: PaymentStatus.PAID },
       });
+
+      logger.info("Booking set to PAID: ", booking);
 
       // Step 4: Mark tickets as BOOKED
       const ticketIds = booking.tickets.map((ticket) => ticket.id);

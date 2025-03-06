@@ -41,11 +41,23 @@ class AdminService {
     }
 
     static async deleteEvent({eventId}) {
-        // Delete event and all associated tickets
-        // Delete images from supabase bucket
-        // Delete price offerings
-        
-        // temporary return statement
+        await prisma.$transaction(async (tx) => {
+            await tx.ticket.deleteMany({
+                where: { eventId },
+            });
+
+            await tx.priceOffering.deleteMany({
+                where: { eventId },
+            });
+
+            await tx.booking.deleteMany({
+                where: { eventId },
+            });
+
+            await tx.event.delete({
+                where: { id: eventId },
+            });
+        });
         return eventId;
     };
 

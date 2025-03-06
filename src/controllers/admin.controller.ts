@@ -67,7 +67,7 @@ class AdminController {
         }
 
         await AdminService.deleteEvent({eventId});
-        res.status(204).send();
+        res.status(204).send({message : "Event deleted successfully"});
     });
 
 }
