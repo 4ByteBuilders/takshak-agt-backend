@@ -34,6 +34,36 @@ class BookingService {
     }
   }
 
+  static async fetchAllUserBookings(userId: string) {
+    const bookings = await prisma.booking.findMany({
+      where: { userId },
+      include: { tickets: true, event: { include: { priceOfferings: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return bookings.map((booking) => {
+      let priceDetails = [];
+
+      // Safely parse priceOfferingSelected if it's a string
+      if (typeof booking.priceOfferingSelected === "string") {
+        try {
+          const parsedOfferings = JSON.parse(booking.priceOfferingSelected);
+          priceDetails = Object.entries(parsedOfferings).map(([id, quantity]) => {
+            const offering = booking.event.priceOfferings.find((offer) => offer.id === id);
+            return offering ? { name: offering.name, price: offering.price, quantity } : null;
+          }).filter(Boolean); // Remove any null values
+        } catch (error) {
+          console.error("Failed to parse priceOfferingSelected:", error);
+        }
+      }
+
+      return {
+        ...booking,
+        priceDetails,
+      };
+    });
+  }
+
 
   static async fetchAmountAndTicketCount(priceOfferingSelected: Record<string, number>) {
     try {

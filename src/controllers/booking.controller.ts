@@ -21,6 +21,13 @@ class BookingController {
     }
   );
 
+  static getAllUserBookings = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user.id;
+    const bookings = await BookingService.fetchAllUserBookings(userId);
+    
+    res.status(200).json(bookings);
+  });
+
   static getPendingBookings = asyncHandler(
     async (req: Request, res: Response) => {
       const userId = req.user.id;
