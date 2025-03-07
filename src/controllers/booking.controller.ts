@@ -7,9 +7,7 @@ import logger from "../utils/logger";
 class BookingController {
   static getBookings = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user.id;
-    const bookings = await BookingService.fetchUserBookings(
-      userId,
-    );
+    const bookings = await BookingService.fetchUserBookings(userId);
 
     res.status(200).json(bookings);
   });
@@ -21,12 +19,14 @@ class BookingController {
     }
   );
 
-  static getAllUserBookings = asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user.id;
-    const bookings = await BookingService.fetchAllUserBookings(userId);
+  static getAllUserBookings = asyncHandler(
+    async (req: Request, res: Response) => {
+      const userId = req.user.id;
+      const bookings = await BookingService.fetchAllUserBookings(userId);
 
-    res.status(200).json(bookings);
-  });
+      res.status(200).json(bookings);
+    }
+  );
 
   static getPendingBookings = asyncHandler(
     async (req: Request, res: Response) => {
@@ -51,9 +51,11 @@ class BookingController {
       }
       const status = (paymentStatus as any).payment_status;
 
-
-      if (status === 'SUCCESS') {
-        await BookingService.updatePaymentStatus({ orderId, paymentStatus: status });
+      if (status === "SUCCESS") {
+        await BookingService.updatePaymentStatus({
+          orderId,
+          paymentStatus: status,
+        });
       }
       res.status(200).json(paymentStatus);
     }
@@ -67,28 +69,32 @@ class BookingController {
         const timestamp = req.headers["x-webhook-timestamp"];
         const body = (req as any).rawBody;
 
-        await BookingService.verifyPaymentSignature({ signature, body, timestamp });
+        await BookingService.verifyPaymentSignature({
+          signature,
+          body,
+          timestamp,
+        });
 
         const paymentData = req.body?.data?.payment;
         const orderData = req.body?.data?.order;
 
         if (!paymentData || !orderData) {
-          res.status(200).send('Webhook received: No relevant data');
+          res.status(200).send("Webhook received: No relevant data");
           return;
         }
         logger.info(`Processing webhook for order ${orderData.order_id}`);
-        if (paymentData.payment_status === 'SUCCESS') {
+        if (paymentData.payment_status === "SUCCESS") {
           await BookingService.confirmBooking(orderData.order_id);
           logger.info(`Booking confirmed for order ${orderData.order_id}`);
         }
 
-        res.status(200).send('Webhook processed successfully');
+        res.status(200).send("Webhook processed successfully");
       } catch (error) {
         logger.error("Error processing webhook:", error);
-        res.status(200).send('Webhook received');
+        res.status(200).send("Webhook received");
       }
     }
-  )
+  );
 
   static cancelBooking = asyncHandler(async (req: Request, res: Response) => {
     const { bookingId } = req.body;
@@ -101,8 +107,6 @@ class BookingController {
     }
     res.status(400).json({ message: "Booking cannot be cancelled" });
   });
-
-
 
   static createOrder = asyncHandler(async (req: Request, res: Response) => {
     const { eventId, priceOfferings } = req.body;
@@ -127,6 +131,21 @@ class BookingController {
     } else {
       res.status(400).json({ message: response.message });
     }
+  });
+  static createConcern = asyncHandler(async (req: Request, res: Response) => {
+    const { bookingId, message, contact, email } = req.body;
+
+    const concern = await BookingService.createConcern(
+      bookingId,
+      message,
+      contact,
+      email
+    );
+    if (concern.success) {
+      res.status(200).json(concern);
+      return;
+    }
+    res.status(400).json({ message: "Concern couldn't be created" });
   });
 }
 
