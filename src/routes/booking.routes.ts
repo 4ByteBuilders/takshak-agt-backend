@@ -8,10 +8,6 @@ const router = Router();
 router.post("/create-order", authMiddleware, BookingController.createOrder);
 router.post("/cancel-booking", BookingController.cancelBooking);
 
-router.post("/verify-booking", BookingController.verifyBooking);
-router.post("/check-in", BookingController.checkIn);
-
-
 router.get("/get-all-user-bookings", authMiddleware, BookingController.getAllUserBookings);
 
 router.get("/remaining-tickets", authMiddleware, BookingController.getRemainingTickets);

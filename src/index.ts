@@ -38,9 +38,10 @@ app.use("/event", eventRouter);
 app.use("/policy", policyRouter);
 app.use("/booking", bookingRouter);
 app.use("/admin", adminRouter);
+app.use("/verify", adminRouter);
 app.use(errorHandler);
 
-cron.schedule('*/1 * * * *', async () => {
+cron.schedule('*/3 * * * *', async () => {
   await updateExpiredBookings();
 });
 
