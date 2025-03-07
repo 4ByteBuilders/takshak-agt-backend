@@ -6,7 +6,7 @@ const router = Router();
 
 router.get("/", authMiddlewareAdmin, VerifierController.getAll);
 router.post("/add", authMiddlewareAdmin, VerifierController.addVerifier);
-router.get("/remove", authMiddlewareAdmin, VerifierController.removeVerifier);
+router.delete("/remove", authMiddlewareAdmin, VerifierController.removeVerifier);
 router.post("/booking", authMiddlewareVerifiers, VerifierController.verifyBooking);
 router.post("/check-in", authMiddlewareVerifiers, VerifierController.checkIn);
 
