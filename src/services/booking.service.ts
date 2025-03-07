@@ -165,6 +165,9 @@ class BookingService {
   static async fetchPaymentStatus(orderId: string) {
     try {
       const response = await Cashfree.PGOrderFetchPayments("2023-08-01", orderId);
+      if(response.data.length === 0) {
+        return {"payment_status": "PENDING"};
+      }
       return response.data[0];
     } catch (error) {
       throw new CustomError("Error fetching payment status", 500);

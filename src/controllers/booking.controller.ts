@@ -92,8 +92,14 @@ class BookingController {
 
   static cancelBooking = asyncHandler(async (req: Request, res: Response) => {
     const { bookingId } = req.body;
-    const booking = await BookingService.cancelBooking(bookingId);
-    res.status(200).json(booking);
+
+    const paymentStatus = await BookingService.fetchPaymentStatus(bookingId);
+    if(paymentStatus.payment_status !== "SUCCESS") {
+      const booking = await BookingService.cancelBooking(bookingId);
+      res.status(200).json(booking);
+      return;
+    }
+    res.status(400).json({ message: "Booking cannot be cancelled" });
   });
 
   static verifyBooking = asyncHandler(async (req: Request, res: Response) => {
