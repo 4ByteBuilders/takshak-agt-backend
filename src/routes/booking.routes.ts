@@ -1,6 +1,6 @@
 import { Router } from "express";
 import BookingController from "../controllers/booking.controller";
-import { authMiddleware } from "../middlewares/auth.middleware";
+import { authMiddleware, authMiddlewareAdmin } from "../middlewares/auth.middleware";
 
 const router = Router();
 
@@ -35,5 +35,8 @@ router.get(
   BookingController.getPendingBookings
 );
 router.post("/update-payment-status", BookingController.updatePaymentStatus);
+
 router.post("/create-concern", BookingController.createConcern);
+router.get("/get-concerns", authMiddlewareAdmin, BookingController.getConcerns);
+
 export default router;

@@ -147,6 +147,12 @@ class BookingController {
     }
     res.status(400).json({ message: "Concern couldn't be created" });
   });
+
+  static getConcerns = asyncHandler(async (req: Request, res: Response) => {
+    const concerns = await BookingService.fetchConcerns();
+    res.status(200).json(concerns);
+  });
+
 }
 
 export default BookingController;

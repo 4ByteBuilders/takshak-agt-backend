@@ -349,19 +349,19 @@ class BookingService {
           );
           return offering
             ? {
-                eventId: "NA",
-                id: "NA",
-                name: offering.name,
-                price: offering.price,
-                capacity: quantity as number,
-              }
+              eventId: "NA",
+              id: "NA",
+              name: offering.name,
+              price: offering.price,
+              capacity: quantity as number,
+            }
             : {
-                eventId: "NA",
-                id: "NA",
-                name: "Unknown",
-                price: 0,
-                capacity: quantity as number,
-              };
+              eventId: "NA",
+              id: "NA",
+              name: "Unknown",
+              price: 0,
+              capacity: quantity as number,
+            };
         }
       );
 
@@ -404,6 +404,16 @@ class BookingService {
       return { success: false, error: "Failed to raise concern" };
     }
   };
+
+  static fetchConcerns = async () => {
+    try {
+      return await prisma.concern.findMany();
+    } catch (error) {
+      console.error("Error fetching concerns:", error);
+      return [];
+    }
+  }
+
 }
 
 export default BookingService;
