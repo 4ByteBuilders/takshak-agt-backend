@@ -4,15 +4,14 @@ import policyRouter from "./routes/policy.routes";
 import bookingRouter from "./routes/booking.routes";
 import adminRouter from "./routes/admin.routes";
 import { errorHandler } from "./middlewares/error.middleware";
-import cors from "cors";
-import express, { Request, Response, NextFunction } from 'express';
-
-dotenv.config();
-
 import { User } from "@supabase/supabase-js";
 import cron from "node-cron";
 import updateExpiredBookings from "./cronJobs/updateExpiredBookings";
-import logger from "./utils/logger";
+import cors from "cors";
+import express, { Request, Response } from 'express';
+
+dotenv.config();
+
 
 declare global {
   namespace Express {
@@ -32,7 +31,7 @@ app.use(express.json({
 app.use(cors());
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("Takshak Event Management");
 });
 
 app.use("/event", eventRouter);
@@ -41,8 +40,7 @@ app.use("/booking", bookingRouter);
 app.use("/admin", adminRouter);
 app.use(errorHandler);
 
-cron.schedule('*/10 * * * *', async () => {
-  logger.info(`[${new Date().toISOString()}] Running cron job to update expired bookings...`);
+cron.schedule('*/1 * * * *', async () => {
   await updateExpiredBookings();
 });
 

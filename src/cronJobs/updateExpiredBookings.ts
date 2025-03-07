@@ -7,43 +7,40 @@ const updateExpiredBookings = async () => {
     const currTime = new Date(Date.now());
 
     const pendingExpiredBookings = await prisma.booking.findMany({
-        where : {
-            paymentStatus : "PENDING",
-            orderExpiryTime : {
-                lt : currTime
+        where: {
+            paymentStatus: "PENDING",
+            orderExpiryTime: {
+                lt: currTime
             }
         }
     });
-    
-    for(const booking of pendingExpiredBookings){
+
+    for (const booking of pendingExpiredBookings) {
 
         const res = await BookingService.fetchPaymentStatus(booking.id);
 
-        if(res.payment_status === 'SUCCESS'){
-            logger.info(`[${new Date().toISOString()}] Booking ${booking.id} already paid`);
+        if (res.payment_status === 'SUCCESS') {
+            logger.info(`Cron Job: Booking ${booking.id} already paid - Changing status to PAID`);
             await prisma.booking.update({
-                where : {
-                    id : booking.id
+                where: {
+                    id: booking.id
                 },
-                data : {
-                    paymentStatus : PaymentStatus.PAID
+                data: {
+                    paymentStatus: PaymentStatus.PAID
                 }
             });
             continue;
         }
 
         await prisma.booking.update({
-            where : {
-                id : booking.id
+            where: {
+                id: booking.id
             },
-            data : {
-                paymentStatus : PaymentStatus.EXPIRED
+            data: {
+                paymentStatus: PaymentStatus.EXPIRED
             }
         });
     }
-
-   logger.info(`[${new Date().toISOString()}] Updated ${pendingExpiredBookings.length} expired bookings`);
-    
 }
 
 export default updateExpiredBookings;

@@ -10,7 +10,6 @@ const logger = winston.createLogger({
         })
     ),
     transports: [
-        // new winston.transports.Console(), // log to console
         new winston.transports.File({ filename: "logs/app.log" })
     ]
 })
