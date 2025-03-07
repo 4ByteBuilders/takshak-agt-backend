@@ -1,6 +1,6 @@
 import prisma from "../utils/prisma";
 import { Cashfree } from "cashfree-pg";
-import { PaymentStatus, Status } from "@prisma/client";
+import { ConcernStatus, PaymentStatus, Status } from "@prisma/client";
 import { CustomError } from "../utils/CustomError";
 import logger from "../utils/logger";
 
@@ -413,6 +413,20 @@ class BookingService {
       return [];
     }
   }
+
+  static updateConcernStatus = async (concernId: string, status: string) => {
+    try {
+      const concern = await prisma.concern.update({
+        where: { id: concernId },
+        data: { status : status === "RESOLVED" ? ConcernStatus.RESOLVED : ConcernStatus.UNRESOLVED },
+      });
+
+      return { success: true, concern };
+    } catch (error) {
+      console.error("Error updating concern status:", error);
+      return { success: false, error: "Failed to update concern status" };
+    }
+  };
 
 }
 

@@ -153,6 +153,12 @@ class BookingController {
     res.status(200).json(concerns);
   });
 
+  static updateConcernStatus = asyncHandler(async (req: Request, res: Response) => {
+    const { concernId, status } = req.body;
+    const concern = await BookingService.updateConcernStatus(concernId, status);
+    res.status(200).json(concern);
+  });
+
 }
 
 export default BookingController;

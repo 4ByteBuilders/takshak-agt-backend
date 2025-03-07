@@ -81,6 +81,7 @@ model Concern {
   contact     String
   email       String
   createdAt   DateTime @default(now())
+  status      ConcernStatus @default(UNRESOLVED)
   booking     Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }
 
@@ -89,6 +90,11 @@ enum Status {
   AVAILABLE
   RESERVED
   BOOKED
+}
+
+enum ConcernStatus {
+  RESOLVED
+  UNRESOLVED
 }
 
 enum MessageStatus {
