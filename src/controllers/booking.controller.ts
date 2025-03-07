@@ -94,7 +94,7 @@ class BookingController {
     const { bookingId } = req.body;
 
     const paymentStatus = await BookingService.fetchPaymentStatus(bookingId);
-    if(paymentStatus.payment_status !== "SUCCESS") {
+    if (paymentStatus.payment_status !== "SUCCESS") {
       const booking = await BookingService.cancelBooking(bookingId);
       res.status(200).json(booking);
       return;
@@ -109,10 +109,10 @@ class BookingController {
   });
 
   static checkIn = asyncHandler(async (req: Request, res: Response) => {
-    const { booking_id, checkedInCount } = req.body;
+    const { bookingId, numToCheckIn } = req.body;
     const booking = await BookingService.checkIn({
-      booking_id,
-      checkedInCount,
+      bookingId,
+      numToCheckIn,
     });
     res.status(200).json(booking);
   });

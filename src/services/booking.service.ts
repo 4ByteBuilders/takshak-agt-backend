@@ -173,8 +173,8 @@ class BookingService {
   static async fetchPaymentStatus(orderId: string) {
     try {
       const response = await Cashfree.PGOrderFetchPayments("2023-08-01", orderId);
-      if(response.data.length === 0) {
-        return {"payment_status": "PENDING"};
+      if (response.data.length === 0) {
+        return { "payment_status": "PENDING" };
       }
       return response.data[0];
     } catch (error) {
@@ -361,9 +361,9 @@ class BookingService {
   }
 
 
-  static async checkIn({ booking_id, checkedInCount }: { booking_id: string, checkedInCount: number }) {
+  static async checkIn({ bookingId, numToCheckIn }: { bookingId: string, numToCheckIn: number }) {
     const booking = await prisma.booking.findUnique({
-      where: { id: booking_id },
+      where: { id: bookingId },
       include: { tickets: true },
     });
 
@@ -371,7 +371,7 @@ class BookingService {
       throw new CustomError("Booking not found", 404);
     }
 
-    const checkedInCountNumber = Number(checkedInCount);
+    const checkedInCountNumber = Number(numToCheckIn);
     const currentCheckIns = booking.numVerifiedAtVenue || 0;
 
     if (checkedInCountNumber + currentCheckIns > booking.tickets.length) {
@@ -379,7 +379,7 @@ class BookingService {
     }
 
     await prisma.booking.update({
-      where: { id: booking_id },
+      where: { id: bookingId },
       data: { numVerifiedAtVenue: { increment: checkedInCountNumber } },
     });
 
