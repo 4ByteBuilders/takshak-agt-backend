@@ -49,12 +49,20 @@ class BookingService {
       if (typeof booking.priceOfferingSelected === "string") {
         try {
           const parsedOfferings = JSON.parse(booking.priceOfferingSelected);
-          priceDetails = Object.entries(parsedOfferings).map(([id, quantity]) => {
-            const offering = booking.event.priceOfferings.find((offer) => offer.id === id);
-            return offering ? { name: offering.name, price: offering.price, quantity } : null;
-          }).filter(Boolean); // Remove any null values
+          priceDetails = Object.entries(parsedOfferings)
+            .map(([id, quantity]) => {
+              const offering = booking.event.priceOfferings.find(
+                (offer) => offer.id === id
+              );
+              return offering
+                ? { name: offering.name, price: offering.price, quantity }
+                : null;
+            })
+            .filter(Boolean); // Remove any null values
         } catch (error) {
-          logger.error("Failed to parse priceOfferingSelected:" + error.toString());
+          logger.error(
+            "Failed to parse priceOfferingSelected:" + error.toString()
+          );
         }
       }
 
@@ -65,8 +73,9 @@ class BookingService {
     });
   }
 
-
-  static async fetchAmountAndTicketCount(priceOfferingSelected: Record<string, number>) {
+  static async fetchAmountAndTicketCount(
+    priceOfferingSelected: Record<string, number>
+  ) {
     try {
       let totalAmount = 0;
       let totalTickets = 0;
@@ -113,7 +122,6 @@ class BookingService {
     });
   }
 
-
   static async createOrder({ orderId, orderAmount, user }) {
     const expiryDate = new Date();
     expiryDate.setMinutes(expiryDate.getMinutes() + 16);
@@ -143,20 +151,22 @@ class BookingService {
       };
     } catch (error) {
       logger.info(error.response?.data);
-      throw new CustomError(error.response?.data?.message || "Error creating order", 500);
+      throw new CustomError(
+        error.response?.data?.message || "Error creating order",
+        500
+      );
     }
   }
 
   static async updatePaymentStatus({ orderId, paymentStatus }) {
-
-    if (paymentStatus === 'SUCCESS') {
+    if (paymentStatus === "SUCCESS") {
       paymentStatus = PaymentStatus.PAID;
-    } else if (paymentStatus === 'FAILED') {
+    } else if (paymentStatus === "FAILED") {
       paymentStatus = PaymentStatus.FAILED;
     }
     const booking = await prisma.booking.update({
       where: {
-        id: orderId
+        id: orderId,
       },
       data: { paymentStatus },
       include: { tickets: true },
@@ -171,9 +181,12 @@ class BookingService {
 
   static async fetchPaymentStatus(orderId: string) {
     try {
-      const response = await Cashfree.PGOrderFetchPayments("2023-08-01", orderId);
+      const response = await Cashfree.PGOrderFetchPayments(
+        "2023-08-01",
+        orderId
+      );
       if (response.data.length === 0) {
-        return { "payment_status": "PENDING" };
+        return { payment_status: "PENDING" };
       }
       return response.data[0];
     } catch (error) {
@@ -229,7 +242,6 @@ class BookingService {
     });
   }
 
-
   static async fetchOrder(orderId: string) {
     try {
       const response = await Cashfree.PGFetchOrder("2023-08-01", orderId);
@@ -257,12 +269,20 @@ class BookingService {
       if (typeof booking.priceOfferingSelected === "string") {
         try {
           const parsedOfferings = JSON.parse(booking.priceOfferingSelected);
-          priceDetails = Object.entries(parsedOfferings).map(([id, quantity]) => {
-            const offering = booking.event.priceOfferings.find((offer) => offer.id === id);
-            return offering ? { name: offering.name, price: offering.price, quantity } : null;
-          }).filter(Boolean); // Remove any null values
+          priceDetails = Object.entries(parsedOfferings)
+            .map(([id, quantity]) => {
+              const offering = booking.event.priceOfferings.find(
+                (offer) => offer.id === id
+              );
+              return offering
+                ? { name: offering.name, price: offering.price, quantity }
+                : null;
+            })
+            .filter(Boolean); // Remove any null values
         } catch (error) {
-          logger.error("Failed to parse priceOfferingSelected:" + error.toString());
+          logger.error(
+            "Failed to parse priceOfferingSelected:" + error.toString()
+          );
         }
       }
 
@@ -273,8 +293,13 @@ class BookingService {
     });
   }
 
-
-  static async fetchPendingBookings({ userId, eventId }: { userId: string; eventId?: string }) {
+  static async fetchPendingBookings({
+    userId,
+    eventId,
+  }: {
+    userId: string;
+    eventId?: string;
+  }) {
     const sixteenMinutesAgo = new Date();
     sixteenMinutesAgo.setMinutes(sixteenMinutesAgo.getMinutes() - 16);
 
@@ -308,19 +333,37 @@ class BookingService {
         try {
           priceOfferingSelected = JSON.parse(booking.priceOfferingSelected);
         } catch (error) {
-          logger.error("Failed to parse priceOfferingSelected:" + error.toString());
+          logger.error(
+            "Failed to parse priceOfferingSelected:" + error.toString()
+          );
         }
       } else {
         priceOfferingSelected = booking.priceOfferingSelected;
       }
 
       // Map price details
-      const priceDetails = Object.entries(priceOfferingSelected).map(([id, quantity]) => {
-        const offering = booking.event.priceOfferings.find((offer) => offer.id === id);
-        return offering
-          ? { eventId: 'NA', id: 'NA', name: offering.name, price: offering.price, capacity: quantity as number }
-          : { eventId: 'NA', id: 'NA', name: "Unknown", price: 0, capacity: quantity as number };
-      });
+      const priceDetails = Object.entries(priceOfferingSelected).map(
+        ([id, quantity]) => {
+          const offering = booking.event.priceOfferings.find(
+            (offer) => offer.id === id
+          );
+          return offering
+            ? {
+                eventId: "NA",
+                id: "NA",
+                name: offering.name,
+                price: offering.price,
+                capacity: quantity as number,
+              }
+            : {
+                eventId: "NA",
+                id: "NA",
+                name: "Unknown",
+                price: 0,
+                capacity: quantity as number,
+              };
+        }
+      );
 
       return {
         ...booking,
@@ -339,6 +382,28 @@ class BookingService {
     // Otherwise, return all transformed bookings
     return transformedBookings;
   }
+  static createConcern = async (
+    bookingId: string,
+    message: string,
+    contact: string,
+    email: string
+  ) => {
+    try {
+      const concern = await prisma.concern.create({
+        data: {
+          bookingId,
+          message,
+          contact,
+          email,
+        },
+      });
+
+      return { success: true, concern };
+    } catch (error) {
+      console.error("Error raising concern:", error);
+      return { success: false, error: "Failed to raise concern" };
+    }
+  };
 }
 
 export default BookingService;
