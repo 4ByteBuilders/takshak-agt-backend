@@ -76,12 +76,12 @@ class AdminController {
     });
 
     static changeMessageStatus = asyncHandler(async (req: Request, res: Response) => {
-        const { messageId, status } = req.body;
-        if (!messageId || !status) {
+        const { id, status } = req.body;
+        if (!id || !status) {
             res.status(400);
             throw new Error('All fields are required');
         }
-        const response = await AdminService.changeMessageStatus(messageId, status);
+        const response = await AdminService.changeMessageStatus(id, status);
         res.status(200).json(response);
     });
 
