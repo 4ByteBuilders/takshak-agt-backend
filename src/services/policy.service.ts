@@ -1,4 +1,6 @@
+import { CustomError } from "../utils/CustomError";
 import prisma from "../utils/prisma";
+import { MessageStatus } from "@prisma/client";
 
 class PolicyService {
     static async createMessage(name: string, email: string, message: string, userId: string) {
@@ -13,7 +15,7 @@ class PolicyService {
             });
             return response;
         } catch (error) {
-            throw new Error(error);
+            throw new CustomError("Failed to create message", 500);
         }
     }
 

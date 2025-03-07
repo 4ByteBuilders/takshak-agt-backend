@@ -48,10 +48,10 @@ class AdminController {
 
         res.status(201).json(event);
     });
-    
+
     static checkAdmin = asyncHandler(async (req: Request, res: Response) => {
         console.log(`Admin ${req.user.email} logged in`);
-        res.status(200).send({isAdmin : true});
+        res.status(200).send({ isAdmin: true });
     });
 
     static getAllEvents = asyncHandler(async (req: Request, res: Response) => {
@@ -66,8 +66,23 @@ class AdminController {
             throw new Error("Please provide eventId");
         }
 
-        await AdminService.deleteEvent({eventId});
-        res.status(204).send({message : "Event deleted successfully"});
+        await AdminService.deleteEvent({ eventId });
+        res.status(204).send({ message: "Event deleted successfully" });
+    });
+
+    static getAllMessages = asyncHandler(async (req: Request, res: Response) => {
+        const response = await AdminService.getAllMessages();
+        res.status(200).json(response);
+    });
+
+    static changeMessageStatus = asyncHandler(async (req: Request, res: Response) => {
+        const { messageId, status } = req.body;
+        if (!messageId || !status) {
+            res.status(400);
+            throw new Error('All fields are required');
+        }
+        const response = await AdminService.changeMessageStatus(messageId, status);
+        res.status(200).json(response);
     });
 
 }

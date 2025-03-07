@@ -1,4 +1,4 @@
-import { Status } from "@prisma/client";
+import { MessageStatus, Status } from "@prisma/client";
 import prisma from "../utils/prisma";
 
 class AdminService {
@@ -12,7 +12,7 @@ class AdminService {
                     dateTime,
                     totalNumberOfTickets,
                     description,
-                    photoUrls : JSON.stringify(photoUrls),
+                    photoUrls: JSON.stringify(photoUrls),
                     priceOfferings: {
                         create: priceOfferings,
                     },
@@ -40,7 +40,7 @@ class AdminService {
         });
     }
 
-    static async deleteEvent({eventId}) {
+    static async deleteEvent({ eventId }) {
         await prisma.$transaction(async (tx) => {
             await tx.ticket.deleteMany({
                 where: { eventId },
@@ -60,6 +60,31 @@ class AdminService {
         });
         return eventId;
     };
+
+    static async getAllMessages() {
+        try {
+            const response = await prisma.message.findMany();
+            return response;
+        } catch (error) {
+            throw new Error(error);
+        }
+    }
+
+    static async changeMessageStatus(messageId: string, status: MessageStatus) {
+        try {
+            const response = await prisma.message.update({
+                where: {
+                    id: messageId
+                },
+                data: {
+                    status
+                }
+            });
+            return response;
+        } catch (error) {
+            throw new Error(error);
+        }
+    }
 
 }
 

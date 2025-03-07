@@ -9,6 +9,7 @@ import cron from "node-cron";
 import updateExpiredBookings from "./cronJobs/updateExpiredBookings";
 import cors from "cors";
 import express, { Request, Response } from 'express';
+import verifyRouter from "./routes/verifier.routes";
 
 dotenv.config();
 
@@ -38,7 +39,7 @@ app.use("/event", eventRouter);
 app.use("/policy", policyRouter);
 app.use("/booking", bookingRouter);
 app.use("/admin", adminRouter);
-app.use("/verify", adminRouter);
+app.use("/verify", verifyRouter);
 app.use(errorHandler);
 
 cron.schedule('*/3 * * * *', async () => {

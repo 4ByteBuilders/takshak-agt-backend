@@ -58,12 +58,13 @@ model Booking {
 }
 
 model Message {
-  id        String   @id @default(uuid())
+  id        String        @id @default(uuid())
   name      String
   userId    String
   email     String
   message   String
-  createdAt DateTime @default(now())
+  status    MessageStatus @default(UNREAD)
+  createdAt DateTime      @default(now())
 }
 
 model Verifier {
@@ -75,6 +76,11 @@ enum Status {
   AVAILABLE
   RESERVED
   BOOKED
+}
+
+enum MessageStatus {
+  UNREAD
+  READ
 }
 
 enum PaymentStatus {
