@@ -4,6 +4,23 @@ import VerifyService from "../services/verfier.service";
 
 class VerifierController {
 
+    static getAll = asyncHandler(async (req: Request, res: Response) => {
+        const verifiers = await VerifyService.getAll();
+        res.status(200).json(verifiers);
+    });
+
+    static addVerifier = asyncHandler(async (req: Request, res: Response) => {
+        const { email } = req.body;
+        const verifier = await VerifyService.addVerifier({ email });
+        res.status(200).json(verifier);
+    });
+
+    static removeVerifier = asyncHandler(async (req: Request, res: Response) => {
+        const { id } = req.body;
+        const verifier = await VerifyService.removeVerifier({ id });
+        res.status(200).json(verifier);
+    });
+
     static verifyBooking = asyncHandler(async (req: Request, res: Response) => {
         const { qr } = req.body;
         const booking = await VerifyService.verifyBooking({ qr });

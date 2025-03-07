@@ -4,6 +4,37 @@ import prisma from "../utils/prisma";
 import supabase from "../utils/supabaseClient";
 
 class VerifyService {
+
+    static async getAll() {
+        const verifiers = await prisma.verifier.findMany();
+        return verifiers;
+    }
+
+    static async addVerifier({ email }: { email: string }) {
+        const verifier = await prisma.verifier.create({
+            data: {
+                email
+            },
+        });
+        return verifier;
+    }
+
+    static async removeVerifier({ id }: { id: string }) {
+        const verifier = await prisma.verifier.findFirst({
+            where: { id },
+        });
+
+        if (!verifier) {
+            throw new CustomError("Verifier not found", 404);
+        }
+
+        await prisma.verifier.delete({
+            where: { id },
+        });
+
+        return verifier;
+    }
+
     static async verifyBooking({ qr }: { qr: string }) {
         const booking = await prisma.booking.findFirst({
             where: {
