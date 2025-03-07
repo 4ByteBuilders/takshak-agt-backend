@@ -1,12 +1,13 @@
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
 }
-
+        
 model Event {
   id                   String          @id @default(uuid())
   title                String
@@ -55,6 +56,7 @@ model Booking {
   numVerifiedAtVenue    Int?
   qrCode                String        @unique
   event                 Event         @relation(fields: [eventId], references: [id])
+  concerns              Concern[]
 }
 
 model Message {
@@ -71,6 +73,17 @@ model Verifier {
   id    String @id @default(uuid())
   email String
 }
+
+model Concern {
+  id          String  @id @default(uuid())
+  bookingId   String  @unique
+  message     String
+  contact     String
+  email       String
+  createdAt   DateTime @default(now())
+  booking     Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
+
 
 enum Status {
   AVAILABLE
