@@ -352,7 +352,6 @@ class BookingService {
     if (!booking) {
       throw new CustomError("Booking not found", 404);
     }
-    console.log(booking);
     const ticketLength = booking?.tickets.length || 0;
     const user = await supabase.auth.admin.getUserById(booking?.userId);
     const userDetails = user?.data.user.user_metadata;
