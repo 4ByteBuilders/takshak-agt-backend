@@ -42,11 +42,11 @@ app.use("/admin", adminRouter);
 app.use(errorHandler);
 
 cron.schedule('*/10 * * * *', async () => {
-  logger.info((`[${new Date().toISOString()}] Running cron job to update expired bookings...`).toString());
+  logger.info(`[${new Date().toISOString()}] Running cron job to update expired bookings...`);
   await updateExpiredBookings();
 });
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
-  console.log("Server is running on port", PORT);
+  console.log(`Server is running on port ${PORT}`);
 });

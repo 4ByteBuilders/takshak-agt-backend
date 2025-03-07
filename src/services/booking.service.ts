@@ -3,6 +3,7 @@ import { Cashfree } from "cashfree-pg";
 import { PaymentStatus, Status } from "@prisma/client";
 import { CustomError } from "../utils/CustomError";
 import logger from "../utils/logger";
+import supabase from "../utils/supabaseClient";
 
 Cashfree.XClientId = process.env.CASHFREE_CLIENT_ID!;
 Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY!;
@@ -142,7 +143,7 @@ class BookingService {
         response: response.data,
       };
     } catch (error) {
-      logger.info(JSON.stringify(error.response?.data));
+      logger.info(error.response?.data);
       throw new CustomError(error.response?.data?.message || "Error creating order", 500);
     }
   }
@@ -154,11 +155,18 @@ class BookingService {
     } else if (paymentStatus === 'FAILED') {
       paymentStatus = PaymentStatus.FAILED;
     }
-    await prisma.booking.update({
+    const booking = await prisma.booking.update({
       where: {
         id: orderId
       },
       data: { paymentStatus },
+      include: { tickets: true },
+    });
+
+    const ticketIds = booking.tickets.map((ticket) => ticket.id);
+    await prisma.ticket.updateMany({
+      where: { id: { in: ticketIds } },
+      data: { status: Status.BOOKED, reservationExpiresAt: null },
     });
   }
 
@@ -339,16 +347,17 @@ class BookingService {
         qrCode: qr,
         paymentStatus: PaymentStatus.PAID,
       },
-      include: {
-        tickets: true,
-      },
+      include: { tickets: true }
     });
-
     if (!booking) {
       throw new CustomError("Booking not found", 404);
     }
+    console.log(booking);
+    const ticketLength = booking?.tickets.length || 0;
+    const user = await supabase.auth.admin.getUserById(booking?.userId);
+    const userDetails = user?.data.user.user_metadata;
 
-    return booking;
+    return { ...booking, totalPeople: ticketLength, user: userDetails };
   }
 
 

@@ -84,7 +84,7 @@ class BookingController {
 
         res.status(200).send('Webhook processed successfully');
       } catch (error) {
-        logger.error("Error processing webhook:" + error.toString());
+        logger.error("Error processing webhook:", error);
         res.status(200).send('Webhook received');
       }
     }
