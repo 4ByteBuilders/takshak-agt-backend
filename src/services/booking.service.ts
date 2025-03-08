@@ -407,9 +407,10 @@ class BookingService {
 
   static fetchConcerns = async () => {
     try {
-      return await prisma.concern.findMany();
+      const concerns =  await prisma.concern.findMany();
+      return concerns;
     } catch (error) {
-      console.error("Error fetching concerns:", error);
+      logger.info("Error fetching concerns:", error);
       return [];
     }
   }

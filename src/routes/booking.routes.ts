@@ -36,7 +36,7 @@ router.get(
 );
 router.post("/update-payment-status", BookingController.updatePaymentStatus);
 
-router.post("/create-concern", BookingController.createConcern);
+router.post("/create-concern",authMiddleware, BookingController.createConcern);
 router.get("/get-concerns", authMiddlewareAdmin, BookingController.getConcerns);
 router.post("/update-concern-status", authMiddleware, BookingController.updateConcernStatus);
 export default router;
