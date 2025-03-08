@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "Booking" ADD COLUMN     "orderExpiryTime" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

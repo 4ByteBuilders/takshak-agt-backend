@@ -1,5 +1,11 @@
 -- CreateEnum
-CREATE TYPE "Status" AS ENUM ('AVAILABLE', 'BOOKED');
+CREATE TYPE "Status" AS ENUM ('AVAILABLE', 'RESERVED', 'BOOKED');
+
+-- CreateEnum
+CREATE TYPE "ConcernStatus" AS ENUM ('RESOLVED', 'UNRESOLVED');
+
+-- CreateEnum
+CREATE TYPE "MessageStatus" AS ENUM ('UNREAD', 'READ');
 
 -- CreateEnum
 CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'PAID', 'FAILED', 'EXPIRED', 'CANCELLED');
@@ -34,6 +40,7 @@ CREATE TABLE "Ticket" (
     "eventId" TEXT NOT NULL,
     "bookingId" TEXT,
     "status" "Status" NOT NULL,
+    "reservationExpiresAt" TIMESTAMP(3),
 
     CONSTRAINT "Ticket_pkey" PRIMARY KEY ("id")
 );
@@ -47,6 +54,7 @@ CREATE TABLE "Booking" (
     "amountPaid" DOUBLE PRECISION NOT NULL,
     "paymentStatus" "PaymentStatus" NOT NULL,
     "paymentSessionId" TEXT,
+    "orderExpiryTime" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "numVerifiedAtVenue" INTEGER,
     "qrCode" TEXT NOT NULL,
@@ -61,13 +69,52 @@ CREATE TABLE "Message" (
     "userId" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "message" TEXT NOT NULL,
+    "status" "MessageStatus" NOT NULL DEFAULT 'UNREAD',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Message_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Verifier" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+
+    CONSTRAINT "Verifier_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Concern" (
+    "id" TEXT NOT NULL,
+    "bookingId" TEXT NOT NULL,
+    "message" TEXT NOT NULL,
+    "contact" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "status" "ConcernStatus" NOT NULL DEFAULT 'UNRESOLVED',
+
+    CONSTRAINT "Concern_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "User" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "phoneNumber" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Booking_qrCode_key" ON "Booking"("qrCode");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Concern_bookingId_key" ON "Concern"("bookingId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- AddForeignKey
 ALTER TABLE "PriceOffering" ADD CONSTRAINT "PriceOffering_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "Event"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -80,3 +127,6 @@ ALTER TABLE "Ticket" ADD CONSTRAINT "Ticket_bookingId_fkey" FOREIGN KEY ("bookin
 
 -- AddForeignKey
 ALTER TABLE "Booking" ADD CONSTRAINT "Booking_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "Event"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Concern" ADD CONSTRAINT "Concern_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "Booking"("id") ON DELETE CASCADE ON UPDATE CASCADE;
