@@ -6,7 +6,7 @@ import logger from "../utils/logger";
 
 Cashfree.XClientId = process.env.CASHFREE_CLIENT_ID!;
 Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY!;
-Cashfree.XEnvironment = Cashfree.Environment.SANDBOX;
+Cashfree.XEnvironment = Cashfree.Environment.PRODUCTION;
 
 class BookingService {
   static async fetchRemainingTickets(eventId: string) {
@@ -407,7 +407,7 @@ class BookingService {
 
   static fetchConcerns = async () => {
     try {
-      const concerns =  await prisma.concern.findMany();
+      const concerns = await prisma.concern.findMany();
       return concerns;
     } catch (error) {
       logger.info("Error fetching concerns:", error);
@@ -419,7 +419,7 @@ class BookingService {
     try {
       const concern = await prisma.concern.update({
         where: { id: concernId },
-        data: { status : status === "RESOLVED" ? ConcernStatus.RESOLVED : ConcernStatus.UNRESOLVED },
+        data: { status: status === "RESOLVED" ? ConcernStatus.RESOLVED : ConcernStatus.UNRESOLVED },
       });
 
       return { success: true, concern };
