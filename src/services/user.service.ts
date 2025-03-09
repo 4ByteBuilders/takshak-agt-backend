@@ -55,16 +55,6 @@ class UserService {
         return user;
     }
 
-    static checkUser = async ({ id }) => {
-        const user = await prisma.user.findUnique({
-            where: {
-                supabaseId: id
-            }
-        });
-        if (user) return true;
-        return false;
-    }
-
 }
 
 export default UserService;
