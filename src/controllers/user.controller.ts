@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
 import UserService from '../services/user.service';
 import { CustomError } from '../utils/CustomError';
@@ -6,12 +6,6 @@ import { CustomError } from '../utils/CustomError';
 class UserController {
     static create = asyncHandler(async (req: Request, res: Response) => {
         const { id } = req.user;
-        const userExists = await UserService.checkUser({ id });
-
-        if (userExists) {
-            res.status(409);
-            return;
-        }
 
         const user = await UserService.create({ id });
         if (!user) {

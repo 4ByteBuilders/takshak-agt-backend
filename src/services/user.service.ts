@@ -1,11 +1,6 @@
 import prisma from "../utils/prisma";
 import supabase from "../utils/supabaseClient";
 
-interface User {
-    email: string;
-    phoneNumber: string;
-}
-
 class UserService {
 
     static create = async ({ id }) => {
@@ -16,14 +11,18 @@ class UserService {
             return null;
         }
 
-        const user = await prisma.user.create({
-            data: {
+        const user = await prisma.user.upsert({
+            where: {
+                supabaseId: id
+            },
+            update: {},
+            create: {
                 phoneNumber: userData.data.user.user_metadata.phoneNumber,
                 email: userData.data.user.email,
                 supabaseId: userData.data.user.id,
                 name: userData.data.user.user_metadata.full_name
             }
-        });
+        })
 
         return user;
     }
@@ -62,8 +61,8 @@ class UserService {
                 supabaseId: id
             }
         });
-
-        return user;
+        if (user) return true;
+        return false;
     }
 
 }
