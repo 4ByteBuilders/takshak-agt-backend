@@ -1,4 +1,6 @@
 import dotenv from "dotenv";
+dotenv.config();
+
 import eventRouter from "./routes/event.routes";
 import policyRouter from "./routes/policy.routes";
 import bookingRouter from "./routes/booking.routes";
@@ -11,7 +13,6 @@ import cors from "cors";
 import express, { Request, Response } from 'express';
 import verifyRouter from "./routes/verifier.routes";
 
-dotenv.config();
 
 
 declare global {
