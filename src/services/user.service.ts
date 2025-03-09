@@ -35,7 +35,12 @@ class UserService {
             }
         });
 
-        return (!!user.phoneNumber);
+        if (user.phoneNumber) {
+            return true;
+        }
+
+        return false;
+
     }
 
     static updatePhone = async ({ id, phoneNumber }) => {
