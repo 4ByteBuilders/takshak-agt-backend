@@ -15,7 +15,7 @@ class UserController {
 
         const user = await UserService.create({ id });
         if (!user) {
-            throw new CustomError('User not found', 404);
+            throw new CustomError('Error creating user', 400);
         }
         res.status(201).json({ message: "User Created Successfully", user });
     });

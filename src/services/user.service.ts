@@ -20,7 +20,7 @@ class UserService {
             data: {
                 phoneNumber: userData.data.user.user_metadata.phoneNumber,
                 email: userData.data.user.email,
-                id: userData.data.user.id,
+                supabaseId: userData.data.user.id,
                 name: userData.data.user.user_metadata.full_name
             }
         });
@@ -31,7 +31,7 @@ class UserService {
     static checkNumber = async ({ id }) => {
         const user = await prisma.user.findUnique({
             where: {
-                id
+                supabaseId: id
             }
         });
 
@@ -46,7 +46,7 @@ class UserService {
     static updatePhone = async ({ id, phoneNumber }) => {
         const user = await prisma.user.update({
             where: {
-                id
+                supabaseId: id
             },
             data: {
                 phoneNumber
@@ -59,7 +59,7 @@ class UserService {
     static checkUser = async ({ id }) => {
         const user = await prisma.user.findUnique({
             where: {
-                id
+                supabaseId: id
             }
         });
 
