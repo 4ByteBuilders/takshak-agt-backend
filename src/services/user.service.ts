@@ -42,6 +42,15 @@ class UserService {
 
     }
 
+    static getUser = async ({ id }) => {
+        const user = await prisma.user.findUnique({
+            where: {
+                supabaseId: id
+            }
+        });
+        return user;
+    }
+
     static updatePhone = async ({ id, phoneNumber }) => {
         const user = await prisma.user.update({
             where: {

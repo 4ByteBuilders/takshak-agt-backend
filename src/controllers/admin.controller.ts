@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import { Request, Response } from "express";
 import AdminService from "../services/admin.service";
+import logger from "../utils/logger";
 
 class AdminController {
     static createEvent = asyncHandler(async (req: Request, res: Response) => {
@@ -50,7 +51,7 @@ class AdminController {
     });
 
     static checkAdmin = asyncHandler(async (req: Request, res: Response) => {
-        console.log(`Admin ${req.user.email} logged in`);
+        logger.info(`Admin ${req.user.email} logged in`);
         res.status(200).send({ isAdmin: true });
     });
 

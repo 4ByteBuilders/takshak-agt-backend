@@ -3,6 +3,7 @@ import { Cashfree } from "cashfree-pg";
 import { ConcernStatus, PaymentStatus, Status } from "@prisma/client";
 import { CustomError } from "../utils/CustomError";
 import logger from "../utils/logger";
+import UserService from "./user.service";
 
 Cashfree.XClientId = process.env.CASHFREE_CLIENT_ID!;
 Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY!;
@@ -35,6 +36,7 @@ class BookingService {
 
       return { remainingTickets };
     } catch (error) {
+      logger.error("Error fetching remaining tickets:", error);
       throw new CustomError("Error fetching remaining tickets", 400);
     }
   }
@@ -96,6 +98,7 @@ class BookingService {
 
       return { totalAmount, totalTickets };
     } catch (error) {
+      logger.error("Error fetching amount and ticket count:", error);
       throw new CustomError("Error fetching amount and ticket count", 400);
     }
   }
@@ -129,16 +132,17 @@ class BookingService {
   static async createOrder({ orderId, orderAmount, user }) {
     const expiryDate = new Date();
     expiryDate.setMinutes(expiryDate.getMinutes() + 16);
+    const userFromDb = await UserService.getUser(user.id);
 
     const request = {
       order_amount: orderAmount,
       order_currency: "INR",
       order_id: orderId,
       customer_details: {
-        customer_id: user.id,
-        customer_phone: "9999999999",
-        customer_email: user.email,
-        customer_name: user.name,
+        customer_id: userFromDb.supabaseId,
+        customer_phone: userFromDb.phoneNumber,
+        customer_email: userFromDb.email,
+        customer_name: userFromDb.name,
       },
       order_expiry_time: expiryDate.toISOString(),
       order_meta: {
@@ -154,7 +158,7 @@ class BookingService {
         response: response.data,
       };
     } catch (error) {
-      logger.info(error.response?.data);
+      logger.error("Error creating order:", error);
       throw new CustomError(
         error.response?.data?.message || "Error creating order",
         500
@@ -163,24 +167,30 @@ class BookingService {
   }
 
   static async updatePaymentStatus({ orderId, paymentStatus }) {
-    if (paymentStatus === "SUCCESS") {
-      paymentStatus = PaymentStatus.PAID;
-    } else if (paymentStatus === "FAILED") {
-      paymentStatus = PaymentStatus.FAILED;
-    }
-    const booking = await prisma.booking.update({
-      where: {
-        id: orderId,
-      },
-      data: { paymentStatus },
-      include: { tickets: true },
-    });
+    try {
 
-    const ticketIds = booking.tickets.map((ticket) => ticket.id);
-    await prisma.ticket.updateMany({
-      where: { id: { in: ticketIds } },
-      data: { status: Status.BOOKED, reservationExpiresAt: null },
-    });
+      if (paymentStatus === "SUCCESS") {
+        paymentStatus = PaymentStatus.PAID;
+      } else if (paymentStatus === "FAILED") {
+        paymentStatus = PaymentStatus.FAILED;
+      }
+      const booking = await prisma.booking.update({
+        where: {
+          id: orderId,
+        },
+        data: { paymentStatus },
+        include: { tickets: true },
+      });
+
+      const ticketIds = booking.tickets.map((ticket) => ticket.id);
+      await prisma.ticket.updateMany({
+        where: { id: { in: ticketIds } },
+        data: { status: Status.BOOKED, reservationExpiresAt: null },
+      });
+    } catch (err) {
+      logger.error("Error updating payment status:", err);
+      throw new CustomError("Error updating payment status", 500);
+    }
   }
 
   static async fetchPaymentStatus(orderId: string) {
@@ -194,6 +204,7 @@ class BookingService {
       }
       return response.data[0];
     } catch (error) {
+      logger.error("Error fetching payment status:", error);
       throw new CustomError("Error fetching payment status", 500);
     }
   }
@@ -207,43 +218,44 @@ class BookingService {
   }
 
   static async confirmBooking(bookingId: string) {
-    return await prisma.$transaction(async (tx) => {
-      // Step 1: Fetch the booking along with its tickets
-      const booking = await tx.booking.findUnique({
-        where: { id: bookingId },
-        include: { tickets: true },
+    try {
+
+      return await prisma.$transaction(async (tx) => {
+        // Step 1: Fetch the booking along with its tickets
+        const booking = await tx.booking.findUnique({
+          where: { id: bookingId },
+          include: { tickets: true },
+        });
+
+        if (!booking) throw new CustomError("Booking not found", 404);
+
+        // Step 2: Ensure the booking isn't already paid or expired
+        if (booking.paymentStatus === PaymentStatus.PAID) {
+          throw new CustomError("Booking is already confirmed", 400);
+        }
+
+        if (booking.orderExpiryTime && booking.orderExpiryTime < new Date()) {
+          throw new CustomError("Booking has expired", 400);
+        }
+
+        // Step 3: Confirm the booking (mark as PAID)
+        await tx.booking.update({
+          where: { id: bookingId },
+          data: { paymentStatus: PaymentStatus.PAID },
+        });
+        // Step 4: Mark tickets as BOOKED
+        const ticketIds = booking.tickets.map((ticket) => ticket.id);
+        await tx.ticket.updateMany({
+          where: { id: { in: ticketIds } },
+          data: { status: Status.BOOKED, reservationExpiresAt: null },
+        });
+
+        return { ...booking, paymentStatus: PaymentStatus.PAID };
       });
-
-      if (!booking) throw new CustomError("Booking not found", 404);
-
-      logger.info("Booking found: ", booking);
-
-      // Step 2: Ensure the booking isn't already paid or expired
-      if (booking.paymentStatus === PaymentStatus.PAID) {
-        throw new CustomError("Booking is already confirmed", 400);
-      }
-
-      if (booking.orderExpiryTime && booking.orderExpiryTime < new Date()) {
-        throw new CustomError("Booking has expired", 400);
-      }
-
-      // Step 3: Confirm the booking (mark as PAID)
-      await tx.booking.update({
-        where: { id: bookingId },
-        data: { paymentStatus: PaymentStatus.PAID },
-      });
-
-      logger.info("Booking set to PAID: ", booking);
-
-      // Step 4: Mark tickets as BOOKED
-      const ticketIds = booking.tickets.map((ticket) => ticket.id);
-      await tx.ticket.updateMany({
-        where: { id: { in: ticketIds } },
-        data: { status: Status.BOOKED, reservationExpiresAt: null },
-      });
-
-      return { ...booking, paymentStatus: PaymentStatus.PAID };
-    });
+    } catch (err) {
+      logger.error("Error confirming booking:", err);
+      throw new CustomError("Error confirming booking", 500);
+    }
   }
 
   static async fetchOrder(orderId: string) {
@@ -255,6 +267,7 @@ class BookingService {
         response: response.data,
       };
     } catch (error) {
+      logger.error("Error fetching order:", error);
       throw new CustomError("Error fetching order", 500);
     }
   }
@@ -404,7 +417,7 @@ class BookingService {
 
       return { success: true, concern };
     } catch (error) {
-      console.error("Error raising concern:", error);
+      logger.error("Error raising concern:", error);
       return { success: false, error: "Failed to raise concern" };
     }
   };
@@ -428,7 +441,7 @@ class BookingService {
 
       return { success: true, concern };
     } catch (error) {
-      console.error("Error updating concern status:", error);
+      logger.error("Error updating concern status:", error);
       return { success: false, error: "Failed to update concern status" };
     }
   };
