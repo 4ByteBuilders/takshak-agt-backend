@@ -12,7 +12,7 @@ class UserService {
 
         const userData = await supabase.auth.admin.getUserById(id);
 
-        if (userData) {
+        if (!userData) {
             return null;
         }
 

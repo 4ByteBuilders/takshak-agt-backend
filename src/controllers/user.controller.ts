@@ -5,17 +5,17 @@ import { CustomError } from '../utils/CustomError';
 
 class UserController {
     static create = asyncHandler(async (req: Request, res: Response) => {
-        console.log("Called route");
-        const { id } = req.body;
+        const { id } = req.user;
         const userExists = await UserService.checkUser({ id });
+
         if (userExists) {
             res.status(409);
             return;
         }
+
         const user = await UserService.create({ id });
         if (!user) {
             throw new CustomError('User not found', 404);
-            return;
         }
         res.status(201).json({ message: "User Created Successfully", user });
     });
