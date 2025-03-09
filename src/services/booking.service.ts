@@ -6,7 +6,11 @@ import logger from "../utils/logger";
 
 Cashfree.XClientId = process.env.CASHFREE_CLIENT_ID!;
 Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY!;
-Cashfree.XEnvironment = Cashfree.Environment.PRODUCTION;
+if (process.env.NODE_ENV === "DEV") {
+  Cashfree.XEnvironment = Cashfree.Environment.SANDBOX;
+} else {
+  Cashfree.XEnvironment = Cashfree.Environment.PRODUCTION;
+}
 
 class BookingService {
   static async fetchRemainingTickets(eventId: string) {
