@@ -25,14 +25,14 @@ class CheckoutService {
     return await prisma.$transaction(
       async (tx) => {
         // Step 1: Remove expired reservations
-        await tx.ticket.updateMany({
-          where: {
-            eventId,
-            status: Status.RESERVED,
-            reservationExpiresAt: { lt: new Date() },
-          },
-          data: { status: Status.AVAILABLE, reservationExpiresAt: null },
-        });
+        // await tx.ticket.updateMany({
+        //   where: {
+        //     eventId,
+        //     status: Status.RESERVED,
+        //     reservationExpiresAt: { lt: new Date() },
+        //   },
+        //   data: { status: Status.AVAILABLE, reservationExpiresAt: null },
+        // });
 
         // Step 2: Select available tickets with row-level locking
         const availableTickets = await tx.$queryRaw<{ id: string }[]>`

@@ -120,10 +120,10 @@ class BookingService {
       });
 
       // Step 3: Release the tickets associated with this booking
-      await tx.ticket.updateMany({
-        where: { id: { in: booking.tickets.map((ticket) => ticket.id) } },
-        data: { status: Status.AVAILABLE, reservationExpiresAt: null },
-      });
+      // await tx.ticket.updateMany({
+      //   where: { id: { in: booking.tickets.map((ticket) => ticket.id) } },
+      //   data: { status: Status.AVAILABLE, reservationExpiresAt: null },
+      // });
 
       return { ...booking, paymentStatus: PaymentStatus.CANCELLED };
     });
