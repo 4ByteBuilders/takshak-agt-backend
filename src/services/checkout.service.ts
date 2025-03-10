@@ -49,12 +49,14 @@ class CheckoutService {
 
         const ticketIds = availableTickets.map((ticket) => ticket.id);
 
+        const ticketsExpiryTime = new Date(Date.now() + RESERVATION_TIMEOUT_MS);
+
         // Step 3: Reserve the tickets
         await tx.ticket.updateMany({
           where: { id: { in: ticketIds } },
           data: {
             status: Status.RESERVED,
-            reservationExpiresAt: new Date(Date.now() + RESERVATION_TIMEOUT_MS),
+            reservationExpiresAt: ticketsExpiryTime,
           },
         });
 
@@ -71,6 +73,7 @@ class CheckoutService {
             paymentStatus: PaymentStatus.PENDING,
             numVerifiedAtVenue: 0,
             qrCode: uuidv4().slice(0, 10),
+            orderExpiryTime: ticketsExpiryTime
           },
         });
 
@@ -79,6 +82,7 @@ class CheckoutService {
           orderId: booking.id,
           orderAmount: totalAmount,
           user,
+          ticketsExpiryTime
         });
 
         if (!response.status) {
@@ -90,7 +94,6 @@ class CheckoutService {
           where: { id: booking.id },
           data: {
             paymentSessionId: response.response.payment_session_id,
-            orderExpiryTime: response.response.order_expiry_time,
           },
         });
 

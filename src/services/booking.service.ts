@@ -115,7 +115,7 @@ class BookingService {
 
       // Step 2: Mark the booking as CANCELLED
       await tx.booking.update({
-        where: { id: bookingId },
+        where: { id: bookingId, paymentStatus: { not: PaymentStatus.PAID } },
         data: { paymentStatus: PaymentStatus.CANCELLED },
       });
 
@@ -129,9 +129,7 @@ class BookingService {
     });
   }
 
-  static async createOrder({ orderId, orderAmount, user }) {
-    const expiryDate = new Date();
-    expiryDate.setMinutes(expiryDate.getMinutes() + 16);
+  static async createOrder({ orderId, orderAmount, user, ticketsExpiryTime }) {
     const userFromDb = await UserService.getUser(user.id);
 
     const request = {
@@ -144,7 +142,7 @@ class BookingService {
         customer_email: userFromDb.email,
         customer_name: userFromDb.name,
       },
-      order_expiry_time: expiryDate.toISOString(),
+      order_expiry_time: ticketsExpiryTime.toISOString(),
       order_meta: {
         return_url: `${process.env.FRONTEND_URL}/payment-status?order_id=${orderId}&status={order_status}`,
       },
@@ -168,21 +166,24 @@ class BookingService {
 
   static async updatePaymentStatus({ orderId, paymentStatus }) {
     try {
-
       if (paymentStatus === "SUCCESS") {
         paymentStatus = PaymentStatus.PAID;
-      } else if (paymentStatus === "FAILED") {
+      } else if (paymentStatus === "FAILED" || paymentStatus === "VOID") {
         paymentStatus = PaymentStatus.FAILED;
       }
+      else if (paymentStatus === "PENDING" || paymentStatus === "NOT_ATTEMPTED" || paymentStatus === "USER_DROPPED") {
+        paymentStatus = PaymentStatus.PENDING;
+      }
+      else {
+        paymentStatus = PaymentStatus.CANCELLED;
+      }
       logger.info(`CHUD GYE GURU - Booking ${orderId} is being confirmed - wenHook Booking Service ${paymentStatus}`);
-      const booking = await prisma.booking.update({
+      await prisma.booking.update({
         where: {
           id: orderId,
         },
         data: { paymentStatus },
-        include: { tickets: true },
       });
-
       // const ticketIds = booking.tickets.map((ticket) => ticket.id);
       // await prisma.ticket.updateMany({
       //   where: { id: { in: ticketIds } },
@@ -203,7 +204,16 @@ class BookingService {
       if (response.data.length === 0) {
         return { payment_status: "PENDING" };
       }
-      return response.data[0];
+      for (const data of response.data) {
+        if (data.payment_status === "SUCCESS") {
+          await BookingService.updatePaymentStatus({
+            orderId,
+            paymentStatus: data.payment_status,
+          });
+          return data;
+        }
+      }
+      // return response.data[0];
     } catch (error) {
       logger.error("Error fetching payment status:", error);
       throw new CustomError("Error fetching payment status", 500);
@@ -258,6 +268,14 @@ class BookingService {
       throw new CustomError("Error confirming booking", 500);
     }
   }
+
+  static updateBookingStatusToPaid = async (bookingId: string) => {
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: { paymentStatus: PaymentStatus.PAID },
+    });
+  };
+
 
   static async fetchOrder(orderId: string) {
     try {

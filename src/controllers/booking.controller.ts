@@ -82,9 +82,9 @@ class BookingController {
           res.status(200).send("Webhook received: No relevant data");
           return;
         }
-        logger.info(`Processing webhook for order ${orderData.order_id}`);
         if (paymentData.payment_status === "SUCCESS") {
-          await BookingService.confirmBooking(orderData.order_id);
+          // await BookingService.confirmBooking(orderData.order_id);
+          await BookingService.updateBookingStatusToPaid(orderData.order_id);
           logger.info(`Booking confirmed for order ${orderData.order_id}`);
         }
 
