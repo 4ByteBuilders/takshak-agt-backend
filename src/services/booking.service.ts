@@ -17,14 +17,14 @@ class BookingService {
   static async fetchRemainingTickets(eventId: string) {
     try {
       // Step 1: Remove expired reservations
-      await prisma.ticket.updateMany({
-        where: {
-          eventId,
-          status: "RESERVED",
-          reservationExpiresAt: { lt: new Date() }, // Expired reservations
-        },
-        data: { status: "AVAILABLE", reservationExpiresAt: null },
-      });
+      // await prisma.ticket.updateMany({
+      //   where: {
+      //     eventId,
+      //     status: "RESERVED",
+      //     reservationExpiresAt: { lt: new Date() }, // Expired reservations
+      //   },
+      //   data: { status: "AVAILABLE", reservationExpiresAt: null },
+      // });
 
       // Step 2: Count remaining available tickets
       const remainingTickets = await prisma.ticket.count({

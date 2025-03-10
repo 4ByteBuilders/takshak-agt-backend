@@ -5,7 +5,7 @@ import BookingService from "../services/booking.service";
 
 const updateExpiredBookings = async () => {
     const currTime = new Date(Date.now());
-
+    // tickets are handled by the database's trigger function
     const pendingExpiredBookings = await prisma.booking.findMany({
         where: {
             paymentStatus: "PENDING",
@@ -16,9 +16,7 @@ const updateExpiredBookings = async () => {
     });
 
     for (const booking of pendingExpiredBookings) {
-
         const res = await BookingService.fetchPaymentStatus(booking.id);
-
         if (res.payment_status === 'SUCCESS') {
             logger.info(`Cron Job: Booking ${booking.id} already paid - Changing status to PAID`);
             await prisma.booking.update({
