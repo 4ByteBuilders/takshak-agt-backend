@@ -174,6 +174,7 @@ class BookingService {
       } else if (paymentStatus === "FAILED") {
         paymentStatus = PaymentStatus.FAILED;
       }
+      logger.info(`CHUD GYE GURU - Booking ${orderId} is being confirmed - wenHook Booking Service ${paymentStatus}`);
       const booking = await prisma.booking.update({
         where: {
           id: orderId,
@@ -182,11 +183,11 @@ class BookingService {
         include: { tickets: true },
       });
 
-      const ticketIds = booking.tickets.map((ticket) => ticket.id);
-      await prisma.ticket.updateMany({
-        where: { id: { in: ticketIds } },
-        data: { status: Status.BOOKED, reservationExpiresAt: null },
-      });
+      // const ticketIds = booking.tickets.map((ticket) => ticket.id);
+      // await prisma.ticket.updateMany({
+      //   where: { id: { in: ticketIds } },
+      //   data: { status: Status.BOOKED, reservationExpiresAt: null },
+      // });
     } catch (err) {
       logger.error("Error updating payment status:", err);
       throw new CustomError("Error updating payment status", 500);
@@ -237,18 +238,18 @@ class BookingService {
         if (booking.orderExpiryTime && booking.orderExpiryTime < new Date()) {
           throw new CustomError("Booking has expired", 400);
         }
-
+        logger.info(`CHUD GYE GURU - Booking ${bookingId} is being confirmed - confirmBooking Booking Service`);
         // Step 3: Confirm the booking (mark as PAID)
         await tx.booking.update({
           where: { id: bookingId },
           data: { paymentStatus: PaymentStatus.PAID },
         });
         // Step 4: Mark tickets as BOOKED
-        const ticketIds = booking.tickets.map((ticket) => ticket.id);
-        await tx.ticket.updateMany({
-          where: { id: { in: ticketIds } },
-          data: { status: Status.BOOKED, reservationExpiresAt: null },
-        });
+        // const ticketIds = booking.tickets.map((ticket) => ticket.id);
+        // await tx.ticket.updateMany({
+        //   where: { id: { in: ticketIds } },
+        //   data: { status: Status.BOOKED, reservationExpiresAt: null },
+        // });
 
         return { ...booking, paymentStatus: PaymentStatus.PAID };
       });
