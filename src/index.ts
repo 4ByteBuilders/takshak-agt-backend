@@ -45,7 +45,7 @@ app.use("/verify", verifyRouter);
 app.use("/user", userRouter);
 app.use(errorHandler);
 
-cron.schedule('*/3 * * * *', async () => {
+cron.schedule('*/10 * * * *', async () => {
   await updateExpiredBookings();
 });
 
