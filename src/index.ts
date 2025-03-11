@@ -10,7 +10,7 @@ import { errorHandler } from "./middlewares/error.middleware";
 import { User } from "@supabase/supabase-js";
 import cron from "node-cron";
 import updateExpiredBookings from "./cronJobs/updateExpiredBookings";
-// import cors from "cors";
+import cors from "cors";
 import express, { NextFunction, Request, Response } from 'express';
 import verifyRouter from "./routes/verifier.routes";
 
@@ -35,6 +35,8 @@ app.use(express.json({
 //   "https://takshakagt.in",
 //   "https://admin.takshakagt.in"
 // ];
+
+app.use(cors());
 
 // app.use(cors({
 //   origin: (origin, callback) => {
