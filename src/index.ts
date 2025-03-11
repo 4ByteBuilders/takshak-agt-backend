@@ -29,7 +29,8 @@ const app = express();
 
 app.use((req, res, next) => {
   const origin = req.headers.origin || "Unknown Origin";
-  console.log("Incoming request from origin:", origin);
+  logger.info("Incoming request from origin:", origin);
+  console.log(req.headers);
   next();
 });
 
