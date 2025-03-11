@@ -13,9 +13,6 @@ import updateExpiredBookings from "./cronJobs/updateExpiredBookings";
 import cors from "cors";
 import express, { NextFunction, Request, Response } from 'express';
 import verifyRouter from "./routes/verifier.routes";
-import logger from "./utils/logger";
-
-
 
 declare global {
   namespace Express {
@@ -27,16 +24,11 @@ declare global {
 
 const app = express();
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin || "Unknown Origin";
-  logger.info("Incoming request from origin:", origin);
-  console.log(req.headers);
-  next();
-});
-
 const allowedOrigins = [
   "https://takshakagt.in",
-  "https://admin.takshakagt.in"
+  "https://www.takshakagt.in",
+  "https://admin.takshakagt.in",
+  "https://www.admin.takshakagt.in"
 ];
 
 app.use(cors({
@@ -48,10 +40,7 @@ app.use(cors({
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true,  // For cookies, sessions, etc.
-  allowedHeaders: "*",
-  exposedHeaders: "*",
-  optionsSuccessStatus: 200
+  credentials: true
 }));
 
 app.use(express.json({
