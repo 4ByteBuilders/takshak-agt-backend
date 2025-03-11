@@ -37,6 +37,10 @@ const allowedOrigins = [
   "https://admin.takshakagt.in"
 ];
 
+app.use((req, res, next) => {
+  console.log("Incoming request from origin:", req.headers.origin);
+  next();
+});
 
 app.use(cors({
   origin: (origin, callback) => {
