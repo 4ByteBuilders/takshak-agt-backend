@@ -96,6 +96,8 @@ class BookingService {
         totalTickets += priceOffering.capacity * quantity;
       });
 
+      totalAmount += (totalAmount * 2.3) / 100;
+
       return { totalAmount, totalTickets };
     } catch (error) {
       logger.error("Error fetching amount and ticket count:", error);
