@@ -13,6 +13,7 @@ import updateExpiredBookings from "./cronJobs/updateExpiredBookings";
 import cors from "cors";
 import express, { NextFunction, Request, Response } from 'express';
 import verifyRouter from "./routes/verifier.routes";
+import logger from "./utils/logger";
 
 
 
@@ -38,7 +39,7 @@ const allowedOrigins = [
 ];
 
 app.use((req, res, next) => {
-  console.log("Incoming request from origin:", req.headers.origin);
+  logger.info("Incoming request from origin:", (req.headers.origin).toString());
   next();
 });
 
