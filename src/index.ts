@@ -11,7 +11,7 @@ import { User } from "@supabase/supabase-js";
 import cron from "node-cron";
 import updateExpiredBookings from "./cronJobs/updateExpiredBookings";
 import cors from "cors";
-import express, { Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import verifyRouter from "./routes/verifier.routes";
 
 
@@ -31,7 +31,22 @@ app.use(express.json({
   }
 }));
 
-app.use(cors());
+const allowedOrigins = [
+  "https://takshakagt.in",
+  "https://admin.takshakagt.in"
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true  // For cookies, sessions, etc.
+}));
 
 app.get("/", (req, res) => {
   res.send("Takshak Event Management");
