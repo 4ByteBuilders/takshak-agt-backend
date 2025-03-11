@@ -5,7 +5,7 @@ import logger from "../utils/logger";
 const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
     logger.error({
         error: err.message,
-        stack: err.stack,
+        stack: {},
     });
     const statusCode = err instanceof CustomError ? err.statusCode : 500;
 
