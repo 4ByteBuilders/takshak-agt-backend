@@ -95,8 +95,8 @@ class BookingService {
         totalAmount += priceOffering.price * quantity;
         totalTickets += priceOffering.capacity * quantity;
       });
-
       totalAmount += (totalAmount * 2.3) / 100;
+      totalAmount = Math.round((totalAmount + Number.EPSILON) * 100) / 100;
 
       return { totalAmount, totalTickets };
     } catch (error) {
