@@ -1,13 +1,14 @@
 import asyncHandler from "express-async-handler";
 import { Request, Response } from "express";
 import EventService from "../services/event.service";
+import { CustomError } from "../utils/CustomError";
 
 class EventController {
 
-  static getAvailableTickets = asyncHandler(async (req : Request, res : Response) => {
+  static getAvailableTickets = asyncHandler(async (req: Request, res: Response) => {
     const eventId = req.query.eventId as string;
-    const availableTicketCount = await EventService.fetchAvailableTickets({eventId});
-    res.status(200).json({availableTicketCount});
+    const availableTicketCount = await EventService.fetchAvailableTickets({ eventId });
+    res.status(200).json({ availableTicketCount });
   })
 
   static create = asyncHandler(async (req: Request, res: Response) => {
@@ -19,7 +20,11 @@ class EventController {
       description,
       photoUrls,
       priceOfferings,
+      password
     } = req.body;
+    if (password !== process.env.ADMIN_PASSWORD) {
+      throw new CustomError("Unauthorized", 401);
+    }
     if (
       !title ||
       !venue ||
