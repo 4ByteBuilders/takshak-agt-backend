@@ -26,22 +26,17 @@ declare global {
 }
 
 const app = express();
-app.use(express.json({
-  verify: (req: Request & { rawBody?: string }, res: Response, buf: Buffer, encoding: BufferEncoding) => {
-    req.rawBody = buf.toString(encoding);
-  }
-}));
 
-app.use(cors());
+app.use((req, res, next) => {
+  const origin = req.headers.origin || "Unknown Origin";
+  console.log("Incoming request from origin:", origin);
+  next();
+});
+
 const allowedOrigins = [
   "https://takshakagt.in",
   "https://admin.takshakagt.in"
 ];
-
-app.use((req, res, next) => {
-  logger.info("Incoming request from origin:", (req.headers.origin).toString());
-  next();
-});
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -56,6 +51,12 @@ app.use(cors({
   allowedHeaders: "*",
   exposedHeaders: "*",
   optionsSuccessStatus: 200
+}));
+
+app.use(express.json({
+  verify: (req: Request & { rawBody?: string }, res: Response, buf: Buffer, encoding: BufferEncoding) => {
+    req.rawBody = buf.toString(encoding);
+  }
 }));
 
 app.get("/", (req, res) => {
