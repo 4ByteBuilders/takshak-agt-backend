@@ -13,6 +13,7 @@ import updateExpiredBookings from "./cronJobs/updateExpiredBookings";
 import cors from "cors";
 import express, { NextFunction, Request, Response } from 'express';
 import verifyRouter from "./routes/verifier.routes";
+import logger from "./utils/logger";
 
 declare global {
   namespace Express {
@@ -33,6 +34,7 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
+    logger.info("Origin: ", origin);
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
